@@ -1,0 +1,15 @@
+<launch>
+  <group ns="absolute_encoder">
+    <node pkg="fmBSP" name="encoder_serial" type="serial_binary_node">
+	<param name="publisher_topic" value="S0_rx_msg" />
+	<param name="subscriber_topic" value="S0_tx_msg" />
+	<param name="device" value="/dev/ttyUSB0" />
+	<param name="baudrate" value="38400" />
+    </node>
+    <node pkg="fmSensors" name="encoder_node" type="absolute_encoder_node" output="screen">
+	<param name="encoder_pub_topic" value="S0_tx_msg" />
+	<param name="encoder_sub_topic" value="S0_rx_msg" />
+	<param name="time" value="0.1" />	
+    </node>
+  </group>
+</launch>
