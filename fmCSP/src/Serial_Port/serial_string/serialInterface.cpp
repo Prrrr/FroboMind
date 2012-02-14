@@ -47,6 +47,7 @@ serialInterface::serialInterface(ros::Publisher& rx_publisher) :
 	s_rx_publisher_ = rx_publisher;
 }
 
+<<<<<<< HEAD
 void serialInterface::readHandler(const boost::system::error_code& error, size_t bytes_transferred)
 {
 
@@ -65,6 +66,49 @@ void serialInterface::readHandler(const boost::system::error_code& error, size_t
 		serial_rx_msg.data = line;
 		serial_rx_msg.header.stamp = ros::Time::now();
 		s_rx_publisher_.publish(serial_rx_msg);
+=======
+void serialInterface::readHandler(const boost::system::error_code& error,
+        size_t bytes_transferred) {
+    bool stop = false;
+
+    if (bytes_transferred) {
+
+	std::istream is(&readbuffer);
+	std::string line;
+
+	while(!stop){
+
+		std::getline(is, line);
+
+		if(!line.empty()){
+			/* publish data ro ros */
+			++serial_rx_msg.header.seq;
+			serial_rx_msg.data = line;
+			serial_rx_msg.header.stamp = ros::Time::now();
+			s_rx_publisher_.publish(serial_rx_msg);
+//			ROS_WARN("String: %s", line.c_str());
+			if  (is.eof() || is.bad() || is.fail())
+			{
+				stop = true;
+				if(is.eof())
+				{
+					// This isn't really bad, is it?
+					// As we will reach the end of the "file"
+					// ROS_WARN ("Serial buffer error: is.eof()");
+				} else 	if(is.bad())
+				{
+					ROS_WARN ("Serial buffer error: is.bad()");
+				}	 else 	if(is.fail())
+				{
+					ROS_WARN ("Serial buffer error: is.fail()");
+				}
+			} 
+
+		}else{
+			stop = true;
+//			ROS_WARN("FINISHED");
+		}
+>>>>>>> Small change for Morten to try out Gits awesomeness.
 	}
 	serialInterface::readSome();
 }
