@@ -1,0 +1,8 @@
+Hi,
+
+This is a driver for the Absolute Encoder from DMM tech
+	- 14-bit magnetic
+
+***TODO***
+
+Add a publisher to distribute data about encoder
