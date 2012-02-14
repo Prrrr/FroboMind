@@ -47,8 +47,7 @@ serialInterface::serialInterface(ros::Publisher& rx_publisher) :
 	s_rx_publisher_ = rx_publisher;
 }
 
-void serialInterface::readHandler(const boost::system::error_code& error,
-		size_t bytes_transferred)
+void serialInterface::readHandler(const boost::system::error_code& error, size_t bytes_transferred)
 {
 
 	if (bytes_transferred)
