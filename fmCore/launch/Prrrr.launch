@@ -1,8 +1,17 @@
 <launch>
-  <group ns="fmSensors">
-	<node pkg="fmSensors" name="lms111_front" type="lms111_node">
-		<param name="host" value="192.168.0.11" />	
-		<param name="topic_id" value="laser_msgs_1" />	 
-	</node>
-  </group>
+	<group ns="fmSensors">
+		<!-- <node pkg="fmSensors" name="lms111_front" type="lms111_node">
+			<param name="host" value="192.168.0.11" />	
+			<param name="topic_id" value="laser_msgs_1" />	 
+		</node> -->
+	</group>
+
+	<group ns="fmBSP">
+		<node pkg="fmBSP" name="IMU_COM" type="serial_node" output="screen" >
+			<param name="publisher_topic" value="imu_raw_input" />	 
+			<param name="subscriber_topic" value="imu_tx" />	
+			<param name="device" value="/dev/ttyUSB0" />	
+			<param name="baudrate" value="57600" />
+		</node>
+	</group>
 </launch>
