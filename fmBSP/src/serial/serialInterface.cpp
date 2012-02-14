@@ -70,7 +70,7 @@ void serialInterface::readHandler(const boost::system::error_code& error,
 				{
 					// This isn't really bad, is it?
 					// As we will reach the end of the "file"
-					//ROS_WARN ("Serial buffer error: is.eof()");
+					// ROS_WARN ("Serial buffer error: is.eof()");
 				} else 	if(is.bad())
 				{
 					ROS_WARN ("Serial buffer error: is.bad()");
