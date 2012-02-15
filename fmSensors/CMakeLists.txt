@@ -31,6 +31,7 @@ rosbuild_add_executable(sparkfun_razor_node src/global_sensors/sparkfun_razor_no
 rosbuild_add_executable(lms111_node src/local_sensors/lms111_node.cpp)
 rosbuild_add_executable(absolute_encoder_node src/absolute_encoder/absolute_encoder_node.cpp)
 rosbuild_add_executable(absolute_encoder_node src/absolute_encoder/absolute_encoder.cpp)
+rosbuild_add_executable(imu_razor_9dof_node src/local_sensors/imu_razor_9dof_node.cpp)
 
 rosbuild_add_executable(ll_encoder_node src/odometry_feedback/LeineLindeEncoder.cpp)
 rosbuild_add_executable(ll_encoder_node src/odometry_feedback/ll_encoder_node.cpp)
