@@ -1,5 +1,5 @@
 <launch>
-  <group ns="absolute_encoder">
+  <group ns="absolute_encoder_left">
     <node pkg="fmBSP" name="encoder_serial" type="serial_binary_node">
 	<param name="publisher_topic" value="S0_rx_msg" />
 	<param name="subscriber_topic" value="S0_tx_msg" />
@@ -11,5 +11,54 @@
 	<param name="encoder_sub_topic" value="S0_rx_msg" />
 	<param name="time" value="0.1" />	
     </node>
+  </group>
+  <group ns="absolute_encoder_right">
+    <node pkg="fmBSP" name="encoder_serial" type="serial_binary_node">
+	<param name="publisher_topic" value="S0_rx_msg" />
+	<param name="subscriber_topic" value="S0_tx_msg" />
+	<param name="device" value="/dev/ttyUSB1" />
+	<param name="baudrate" value="38400" />
+    </node>
+    <node pkg="fmSensors" name="encoder_node" type="absolute_encoder_node" output="screen">
+	<param name="encoder_pub_topic" value="S0_tx_msg" />
+	<param name="encoder_sub_topic" value="S0_rx_msg" />
+	<param name="time" value="0.1" />	
+    </node>
+  </group>
+  <group ns="kbhit">
+    <node pkg="fmHMI" name="kbhit_node" type="kbhit_move" output="screen">
+	<param name="topic" value="kbhit_topic" />
+	<param name="twist_topic" value="/robocard/twist_topic" />
+	<param name="max_speed" value="100" />
+	<param name="min_speed" value="-100" />
+	<param name="turn_constant" value="3" />
+	<param name="ramp" value="20" />
+    </node>
+  </group>
+  <group ns="robocard">
+    <node pkg="fmPSP" name="ctrl_node" type="prrr_ctrl_node" output="screen">
+	<param name="twist_topic" value="twist_topic" />
+	<param name="sub_topic" value="ctrl_sub_topic" />
+	<param name="pub_topic" value="ctrl_pub_topic" />
+    </node>
+    <node pkg="fmPSP" name="protocol_node" type="prrr_protocol_node" output="screen">
+	<param name="data_rx" value="ctrl_pub_topic" />
+	<param name="data_tx" value="ctrl_sub_topic" />
+	<param name="slip_rx" value="slip_rx_topic" />
+	<param name="slip_tx" value="slip_tx_topic" />
+    </node>
+    <node pkg="fmBSP" name="slip_node" type="slip_node">
+	<param name="unwrapped_topic" value="slip_rx_topic" />
+	<param name="wrap_topic" value="slip_tx_topic" />
+	<param name="transmit_topic" value="serial_rxd_topic" />
+	<param name="receive_topic" value="serial_tx_topic" />
+    </node>
+    <node pkg="fmBSP" name="serial_node" type="serial_binary_node">
+	<param name="publisher_topic" value="serial_rxd_topic" />
+	<param name="subscriber_topic" value="serial_tx_topic" />
+	<param name="device" value="/dev/ttyUSB2" />
+	<param name="baudrate" value="38400" />
+    </node>
+
   </group>
 </launch>

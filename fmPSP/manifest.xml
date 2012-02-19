@@ -10,6 +10,7 @@
   <url>http://ros.org/wiki/fmPSP</url>
   <depend package="roscpp"/>
   <depend package="fmMsgs"/>
+  <depend package="geometry_msgs"/>
 
 </package>
 

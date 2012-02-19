@@ -30,6 +30,8 @@ rosbuild_add_executable(serial_node src/serial/serialInterface.cpp)
 rosbuild_add_executable(serial_binary_node src/serial_binary/serial_node.cpp)
 rosbuild_add_executable(serial_binary_node src/serial_binary/serialInterface.cpp)
 
+rosbuild_add_executable(slip_node src/SLIP/SlipProtocol.cpp)
+
 IF(EXISTS /usr/include/can4linux.h)
 rosbuild_add_executable(can_node src/can/can_node.cpp)
 ENDIF(EXISTS /usr/include/can4linux.h)

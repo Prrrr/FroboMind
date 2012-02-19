@@ -10,6 +10,7 @@
 #include <ros/ros.h>
 #include <string.h>
 #include "fmMsgs/kbhit.h"
+#include <geometry_msgs/TwistStamped.h>
 
 extern "C"{
 	#include "kbhit.h"
@@ -35,6 +36,13 @@ class Kbhit{
 	void robot_drive(int d_spd, int d_ang);
 	void keyHandle(char key);
 	void stop_robot();
+	// Twist
+	std::string twist_topic;
+	double twist_linear, twist_angular;
+	geometry_msgs::TwistStamped twist_msg;
+	ros::Publisher twist_pub;
+	void twist_robot(double d_lin, double d_ang);
+	void twist_check(double& lin, double& ang);
 
  public:
 	int stop;
@@ -51,19 +59,23 @@ Kbhit::Kbhit(){
 	ros::NodeHandle n("~");
 
 	std::string kbhit_move_topic;
-	n.param<std::string>("topic", kbhit_move_topic, "kbhit_topic");
+	n.param<std::string>("topic", kbhit_move_topic, "kbhit__topic");
+	n.param<std::string>("twist_topic", twist_topic, "kbhit_twist_topic");
 	n.param<int>("max_speed", max_speed, 100);
 	n.param<int>("min_speed", min_speed, -100);
 	n.param<int>("turn_constant", turn_constant, 3);
 	n.param<int>("ramp", ramp, 20);
 
 	move_pub = nh.advertise<fmMsgs::kbhit>(kbhit_move_topic.c_str(), 1000);
-
+	twist_pub = nh.advertise<geometry_msgs::TwistStamped>(twist_topic.c_str(), 1);
 	// Initialize variables
 	speed = 0;
 	angle = 0;
 	v_left = 0;
 	v_right = 0;
+	// Twist init
+	twist_angular = 0;
+	twist_linear = 0;
 
 	/* kbhit init*/
 	stop = false;
@@ -91,6 +103,47 @@ int Kbhit::check_value(int check, int old){
 		return_value = old - ramp;
 	}
 	return return_value;
+}
+/********************************************************
+ * Check if the twist message is a-okay
+ * TODO: This should also check for the ramp!!!
+ */
+void Kbhit::twist_check(double& lin, double& ang){
+	static double old_lin = 0, old_ang = 0;
+	if (lin > 1)
+		old_lin = 1;
+	else if (lin < -1)
+		old_lin = -1;
+	else old_lin = lin;
+	// Update the pointed to velocity
+	lin = old_lin;
+
+	if (ang > 90)
+		old_ang = 90;
+	else if (ang < -90)
+		old_ang = -90;
+	else
+		old_ang = ang;
+	// Update the pointed to angle
+	ang = old_ang;
+}
+/**************************************************
+ * Calculates the twist msg from Kbhits
+ */
+void Kbhit::twist_robot(double d_lin, double d_ang){
+	twist_linear = twist_linear + d_lin;
+	// If no angle change, keep true (drive straight)
+	if (d_ang != 0)
+		twist_angular = twist_angular + d_ang;
+	else
+		twist_angular = 0;
+	//Check values
+	twist_check(twist_linear, twist_angular);
+	// Publish message
+	twist_msg.header.stamp = ros::Time::now();
+	twist_msg.twist.linear.x = twist_linear;
+	twist_msg.twist.angular.x = twist_angular;
+	twist_pub.publish(twist_msg);
 }
 
 void Kbhit::robot_drive(int d_spd, int d_ang){
@@ -121,12 +174,16 @@ void Kbhit::keyHandle(char key){
 	// Theese could be input as a ROS parameter as 'step_size'
 	if (key == 'w'){
 		robot_drive(5,0);
+		twist_robot(0.05,0);
 	}else if(key =='s'){
 		robot_drive(-5,0);
+		twist_robot(-0.05,0);
 	}else if(key =='a'){
 		robot_drive(0,-5);
+		twist_robot(0,-5);
 	}else if(key =='d'){
 		robot_drive(0,5);
+		twist_robot(0,0.05);
 	}
 }
 
