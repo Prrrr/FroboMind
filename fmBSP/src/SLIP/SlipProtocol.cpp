@@ -34,7 +34,7 @@ SlipProtocol::SlipProtocol() {
 	// This is the timer. Responsible for testing
 	// USE this for testing
 	ros::Duration duration(1);
-	timer = nh.createTimer(duration, &SlipProtocol::timerCallBack, this);
+	//timer = nh.createTimer(duration, &SlipProtocol::timerCallBack, this);
 
 	// Outgoing communication
 	// ie. to a MicroController
@@ -53,7 +53,7 @@ void SlipProtocol::callbackSend(const fmMsgs::serial_bin::ConstPtr& msg){
 	slip_tx_buffer.clear();
 	for (int i = 0; i < msg->data.size(); i++){
 		slip_tx_buffer.push_back(msg->data[i]);
-	};
+	}
 	send_packet(slip_tx_buffer);
 }
 /****************************************************************
@@ -62,18 +62,20 @@ void SlipProtocol::callbackSend(const fmMsgs::serial_bin::ConstPtr& msg){
  * TODO: This receiver ASSUMES that only 1 byte is received from the serial port at a time
  */
 void SlipProtocol::callbackReceive(const fmMsgs::serial_bin::ConstPtr& msg){
-	if ((int)recv_packet(slip_rx_buffer, msg->data[0])){	// This assumes only one character over the line at a time
-		++unwrapped_msg.header.seq;
-		unwrapped_msg.data.clear();
-		while (!slip_rx_buffer.empty()){					// Cleares the buffer again as well
-			unwrapped_msg.data.push_back(slip_rx_buffer.front());
-			slip_rx_buffer.pop_front();
-		}
+	for (int i = 0; i < msg->data.size(); i++){
+		if ((int)recv_packet(slip_rx_buffer, msg->data[i])){
+			++unwrapped_msg.header.seq;
+			unwrapped_msg.data.clear();
+			while (!slip_rx_buffer.empty()){					// Cleares the buffer again as well
+				unwrapped_msg.data.push_back(slip_rx_buffer.front());
+				slip_rx_buffer.pop_front();
+			}
 
-		unwrapped_msg.length = unwrapped_msg.data.size();
-		ros::Time start = ros::Time::now();
-		unwrapped_msg.header.stamp = start;
-		slip_unwrapped.publish(unwrapped_msg);
+			unwrapped_msg.length = unwrapped_msg.data.size();
+			ros::Time start = ros::Time::now();
+			unwrapped_msg.header.stamp = start;
+			slip_unwrapped.publish(unwrapped_msg);
+		}
 	}
 }
 /**********************************************************

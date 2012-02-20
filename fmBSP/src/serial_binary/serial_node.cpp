@@ -30,7 +30,7 @@
 # File:     serial_node.cpp                                            
 # Purpose:  Create a interface node to handle serial communication
 # Project:  vic_interfaces
-# Author:   Søren Hundevadt Nielsen <soeni05@gmail.com>
+# Author:   Søren Hundevadt Nielsen <soeni05@	gmail.com>
 # Created:  Apr 29, 2011 Søren Hundevadt Nielsen, Source written
 # Modified: Jan 06, 2012 Morten Ege Jensen, ported to binary interface
 *************************************************************************************/
@@ -54,7 +54,7 @@ int main(int argc, char **argv)
   int baudrate;
 
   /* initialize ros usage */
-  ros::init(argc, argv, "vic_serial_binary_interface");
+  ros::init(argc, argv, "serial_binary_interface");
   ros::Publisher s_publisher;
   ros::Subscriber s_subscriber;
 

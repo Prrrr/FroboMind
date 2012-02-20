@@ -43,22 +43,24 @@
 #include <boost/system/system_error.hpp>
 #include <boost/thread.hpp>
 #include <boost/asio/read.hpp>
-
+#include <vector>
 #include "ros/ros.h"
 #include "fmMsgs/serial_bin.h"
 
 #define BIN_BYTES 2
-
+using namespace std;
 class serialInterface
 {
 private:
 
   /* private variables */
+	int msg_len;
   ros::Publisher s_rx_publisher_;
   boost::asio::io_service io_;
   boost::asio::serial_port serial_;
   //boost::asio::streambuf readbuffer;	// Original
   boost::array<uint8_t, BIN_BYTES> readbuffer;
+  //vector<uint8_t> readbuffer;
 
   fmMsgs::serial_bin serial_rx_msg;
 
