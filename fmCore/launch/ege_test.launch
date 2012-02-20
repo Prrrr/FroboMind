@@ -3,7 +3,7 @@
     <node pkg="fmBSP" name="encoder_serial" type="serial_binary_node">
 	<param name="publisher_topic" value="S0_rx_msg" />
 	<param name="subscriber_topic" value="S0_tx_msg" />
-	<param name="device" value="/dev/ttyUSB0" />
+	<param name="device" value="/dev/ttyUSB1" />
 	<param name="baudrate" value="38400" />
     </node>
     <node pkg="fmSensors" name="encoder_node" type="absolute_encoder_node" output="screen">
@@ -16,7 +16,7 @@
     <node pkg="fmBSP" name="encoder_serial" type="serial_binary_node">
 	<param name="publisher_topic" value="S0_rx_msg" />
 	<param name="subscriber_topic" value="S0_tx_msg" />
-	<param name="device" value="/dev/ttyUSB1" />
+	<param name="device" value="/dev/ttyUSB2" />
 	<param name="baudrate" value="38400" />
     </node>
     <node pkg="fmSensors" name="encoder_node" type="absolute_encoder_node" output="screen">
@@ -53,11 +53,12 @@
 	<param name="transmit_topic" value="serial_rxd_topic" />
 	<param name="receive_topic" value="serial_tx_topic" />
     </node>
-    <node pkg="fmBSP" name="serial_node" type="serial_binary_node">
-	<param name="publisher_topic" value="serial_rxd_topic" />
-	<param name="subscriber_topic" value="serial_tx_topic" />
-	<param name="device" value="/dev/ttyUSB2" />
+    <node pkg="fmBSP" name="serial_node" type="serial_bytes_node" output="screen">
+	<param name="pub_topic" value="serial_rxd_topic" />
+	<param name="sub_topic" value="serial_tx_topic" />
+	<param name="device" value="/dev/ttyUSB0" />
 	<param name="baudrate" value="38400" />
+	<param name="bytes" value="7" />
     </node>
 
   </group>

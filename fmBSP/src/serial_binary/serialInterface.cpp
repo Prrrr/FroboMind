@@ -40,7 +40,6 @@
 serialInterface::serialInterface(ros::Publisher& rx_publisher) :
     serial_(io_) {
     ROS_DEBUG("Constructor");
-
     s_rx_publisher_ = rx_publisher;
 }
 
@@ -57,7 +56,7 @@ void serialInterface::readHandler(const boost::system::error_code& error,
         ++serial_rx_msg.header.seq;
 	serial_rx_msg.data.clear();
 	// read data from buffer
-	int i = 0;
+	//int i = 0;
 	for (int i = 0; i < BIN_BYTES; i++){
 		serial_rx_msg.data.push_back(readbuffer[i]);
 	}
@@ -104,7 +103,7 @@ bool serialInterface::openDevice(std::string device, int baudrate) {
 void serialInterface::writeHandler(const fmMsgs::serial_bin::ConstPtr& msg) {
     if (serial_.is_open()) {
 	// NB: msg.data is a vector. Treat it as such
-	readbuffer.assign(0);
+	//readbuffer.assign(0);
         serial_.write_some(boost::asio::buffer(msg->data,msg->length));
     }
 }
