@@ -36,130 +36,106 @@
 
 #include "serialInterface.h"
 
-using namespace std;
-
-
 serialInterface::serialInterface(ros::Publisher& rx_publisher) :
-		serial_(io_)
-{
-	ROS_DEBUG("Constructor");
+    serial_(io_) {
+    ROS_DEBUG("Constructor");
 
-	s_rx_publisher_ = rx_publisher;
+    s_rx_publisher_ = rx_publisher;
 }
 
-<<<<<<< HEAD
-void serialInterface::readHandler(const boost::system::error_code& error, size_t bytes_transferred)
-{
+void serialInterface::readHandler(const boost::system::error_code& error,
+		size_t bytes_transferred) {
 
-	if (bytes_transferred)
-	{
+	if (bytes_transferred) {
 
-		istream is(&readbuffer);
-		char line[128];
-
-		// only read until bytes_transferred to avoid reading after \n
-		// if the streambuffer contains a second line boost should call us again
-		is.getline(line,bytes_transferred,'\n');
+		std::istream is(&readbuffer);
+		std::string line;
+		std::getline(is, line);
 
 		/* publish data ro ros */
 		++serial_rx_msg.header.seq;
 		serial_rx_msg.data = line;
-		serial_rx_msg.header.stamp = ros::Time::now();
+		ros::Time start = ros::Time::now();
+		serial_rx_msg.header.stamp = start;
 		s_rx_publisher_.publish(serial_rx_msg);
-=======
-void serialInterface::readHandler(const boost::system::error_code& error,
-        size_t bytes_transferred) {
-    bool stop = false;
 
-    if (bytes_transferred) {
-
-	std::istream is(&readbuffer);
-	std::string line;
-
-	while(!stop){
-
-		std::getline(is, line);
-
-		if(!line.empty()){
-			/* publish data ro ros */
-			++serial_rx_msg.header.seq;
-			serial_rx_msg.data = line;
-			serial_rx_msg.header.stamp = ros::Time::now();
-			s_rx_publisher_.publish(serial_rx_msg);
-//			ROS_WARN("String: %s", line.c_str());
-			if  (is.eof() || is.bad() || is.fail())
-			{
-				stop = true;
-				if(is.eof())
-				{
-					// This isn't really bad, is it?
-					// As we will reach the end of the "file"
-					// ROS_WARN ("Serial buffer error: is.eof()");
-				} else 	if(is.bad())
-				{
-					ROS_WARN ("Serial buffer error: is.bad()");
-				}	 else 	if(is.fail())
-				{
-					ROS_WARN ("Serial buffer error: is.fail()");
-				}
-			} 
-
-		}else{
-			stop = true;
-//			ROS_WARN("FINISHED");
-		}
->>>>>>> Small change for Morten to try out Gits awesomeness.
 	}
 	serialInterface::readSome();
 }
 
-void serialInterface::readSome()
-{
-	if (ros::ok())
-	{
-		//serial_.async_read_some(boost::asio::buffer(&rx_buffer_, 1), boost::bind(&serialInterface::readHandler, this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
-		boost::asio::async_read_until(serial_, readbuffer, "\n",
-				boost::bind(&serialInterface::readHandler, this,
-						boost::asio::placeholders::error,
-						boost::asio::placeholders::bytes_transferred));
-	}
+// void serialInterface::readHandler(const boost::system::error_code& error,
+//         size_t bytes_transferred) {
+//     bool stop = false;
+// 
+//     if (bytes_transferred) {
+// 
+// 	std::istream is(&readbuffer);
+// 	std::string line;
+// 
+// 	while(!stop){
+// 
+// 		std::getline(is, line);
+// 
+// 		if(!line.empty()){
+// 			/* publish data ro ros */
+// 			++serial_rx_msg.header.seq;
+// 			serial_rx_msg.data = line;
+// 			serial_rx_msg.header.stamp = ros::Time::now();
+// 			s_rx_publisher_.publish(serial_rx_msg);
+// //			ROS_WARN("String: %s", line.c_str());
+// 			if  (is.eof() || is.bad() || is.fail())
+// 			{
+// 				stop = true;
+// 				ROS_WARN ("Serial buffer error. String: %s", line.c_str());
+// 			} 
+// 
+// 		}else{
+// 			stop = true;
+// //			ROS_WARN("FINISHED");
+// 		}
+// 	}
+//     }
+//     serialInterface::readSome();
+// }
+
+void serialInterface::readSome() {
+    if (ros::ok()) {
+        //serial_.async_read_some(boost::asio::buffer(&rx_buffer_, 1), boost::bind(&serialInterface::readHandler, this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
+        boost::asio::async_read_until(serial_, readbuffer,
+                boost::regex("\n"), boost::bind(
+                        &serialInterface::readHandler, this,
+                        boost::asio::placeholders::error,
+                        boost::asio::placeholders::bytes_transferred));
+    }
 }
 
-bool serialInterface::openDevice(std::string device, int baudrate)
-{
-	ROS_DEBUG("Open Device");
-	try
-	{
-		boost::asio::serial_port_base::baud_rate BAUD(baudrate);
-		serial_.open(device);
-		serial_.set_option(BAUD);
-	} catch (boost::system::system_error &e)
-	{
-		ROS_ERROR(
-				"Connection to device %s failed; %s", e.what(), device.c_str());
-		return 1;
-	}
-	/* start the read from the serial device */
-	serialInterface::readSome();
+bool serialInterface::openDevice(std::string device, int baudrate) {
+    ROS_DEBUG("Open Device");
+    try {
+        boost::asio::serial_port_base::baud_rate BAUD(baudrate);
+        serial_.open(device);
+        serial_.set_option(BAUD);
+    } catch (boost::system::system_error &e) {
+        ROS_ERROR("Connection to device %s failed; %s",e.what(), device.c_str());
+        return 1;
+    }
+    /* start the read from the serial device */
+    serialInterface::readSome();
 
-	boost::thread t(boost::bind(&boost::asio::io_service::run, &io_));
+    boost::thread t(boost::bind(&boost::asio::io_service::run, &io_));
 
-	return 0;
+    return 0;
 }
 
-void serialInterface::writeHandler(const fmMsgs::serial::ConstPtr& msg)
-{
-	if (serial_.is_open())
-	{
-		serial_.write_some(
-				boost::asio::buffer(msg->data.c_str(), msg->data.length()));
-	}
+void serialInterface::writeHandler(const fmMsgs::serial::ConstPtr& msg) {
+    if (serial_.is_open()) {
+        serial_.write_some(boost::asio::buffer(msg->data.c_str(),msg->data.length()));
+    }
 }
 
-serialInterface::~serialInterface()
-{
-	serial_.cancel();
-	serial_.close();
+serialInterface::~serialInterface() {
+    serial_.cancel();
+    serial_.close();
 
-	sleep(2);
+    sleep(2);
 }
