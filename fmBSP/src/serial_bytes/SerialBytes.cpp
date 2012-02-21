@@ -2,7 +2,7 @@
  * SerialBytes.cpp
  *
  *  Created on: Feb 20, 2012
- *      Author: ege
+ *      Author: Morten Ege Jensen
  */
 
 #include "SerialBytes.h"
@@ -25,8 +25,11 @@ SerialBytes::SerialBytes() : serial_(io_){
 	n.param<string> ("device", dev, "/dev/ttyUSB0");
 	n.param<int>("baudrate", baudrate, 38400);
 	n.param<int>("bytes", bytes, 7);
-
+	// Resize the buffer to make it work with boost::buffer
+	buffer.resize(bytes);
+	// Open device
 	openDevice(dev, baudrate);
+	// Publishers / Subscribers
 	serial_sub = nh.subscribe<fmMsgs::serial_bin>(sub_topic.c_str(), 1000, &SerialBytes::writeHandler, this);
 	serial_pub = nh.advertise<fmMsgs::serial_bin>(pub_topic.c_str(), 1000);
 }

@@ -25,14 +25,14 @@ SlipProtocol::SlipProtocol() {
 	ros::NodeHandle n("~");
 
 	/* read parameters from ros parameter server if available otherwise use default values */
-	n.param<std::string> ("transmit_topic", slip_rx_topic, "slip_tx_msg");
-	n.param<std::string> ("receive_topic", slip_tx_topic, "slip_tx_msg");	// TODO: These are looping. NOTICE!!
-	n.param<std::string> ("wrap_topic", slip_wrap_topic, "slip_unwrapped_msg"); // TODO: Theese are looping . slip_wrap_msg
+	n.param<std::string> ("transmit_topic", slip_rx_topic, "slip_rx_msg");
+	n.param<std::string> ("receive_topic", slip_tx_topic, "slip_tx_msg");
+	n.param<std::string> ("wrap_topic", slip_wrap_topic, "slip_wrap_msg");
 	n.param<std::string> ("unwrapped_topic", slip_unwrapped_topic, "slip_unwrapped_msg");
 
 
 	// This is the timer. Responsible for testing
-	// USE this for testing
+	// TODO: Is used for testing - Delete when comitting
 	ros::Duration duration(1);
 	//timer = nh.createTimer(duration, &SlipProtocol::timerCallBack, this);
 
@@ -59,7 +59,6 @@ void SlipProtocol::callbackSend(const fmMsgs::serial_bin::ConstPtr& msg){
 /****************************************************************
  * Receives msgs formatted to the SLIP protocol (ie. over UART)
  * and publishes them as raw data
- * TODO: This receiver ASSUMES that only 1 byte is received from the serial port at a time
  */
 void SlipProtocol::callbackReceive(const fmMsgs::serial_bin::ConstPtr& msg){
 	for (int i = 0; i < msg->data.size(); i++){
@@ -215,7 +214,6 @@ void SlipProtocol::send_packet(list<char>& buffer){
  * Destructor: Not in use
  */
 SlipProtocol::~SlipProtocol() {
-	// TODO Auto-generated destructor stub
 }
 
 /***********************************************************

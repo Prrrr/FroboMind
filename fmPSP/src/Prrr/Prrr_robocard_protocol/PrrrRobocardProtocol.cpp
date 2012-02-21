@@ -47,16 +47,19 @@ void PrrrRobocardProtocol::slipCallback(const fmMsgs::serial_bin::ConstPtr& msg)
 	uint8_t flags = 0;
 	uint8_t msg_length = msg->length;
 	uint8_t data_length = msg->data[0];
-	ROS_INFO("MSG: %d %d %d %d %d", msg->data[0], msg->data[1], msg->data[2], msg->data[3], msg->data[4]);
+	ROS_INFO("Protocol RCV: %d %d %d %d %d", msg->data[0], msg->data[1], msg->data[2], msg->data[3], msg->data[4]);
 	// Check lengths
 	if (msg_length != (data_length + 3))		// TODO: Something is wrong with the message - Set FLAG_LENGTH_ISSUE
 		ROS_INFO("There's a length issue: %d - %d", msg_length, data_length);
 	data_tx_msg.len = data_length;
+	// Calculate checksum
+	for (uint8_t i = 0; i < msg->length-1; i++){
+		calc_checksum += msg->data[i];
+	}
 	// Copy the data - NOTE: ONLY IF THE DATA ARE CONCISE!!!
-	// Calculate the checksum
 	for (uint8_t i = 1; i < data_length+1; i++){
 		data_tx_msg.data.push_back(msg->data[i]);
-		calc_checksum += msg->data[i];		// TODO: The checksum should calculate len and flags too
+		//calc_checksum += msg->data[i];		// TODO: The checksum should calculate len and flags too
 	}
 	// Check the checksum
 	data_checksum = msg->data[data_length+2];
@@ -83,11 +86,15 @@ void PrrrRobocardProtocol::dataCallback(const fmMsgs::prrr_protocol::ConstPtr& m
 	slip_tx_msg.data.push_back(msg->len);
 	for (int i = 0; i < msg->len; i++){
 		slip_tx_msg.data.push_back(msg->data[i]);
-		checksum += msg->data[i];		// TODO: This Checksum should include len and flags too
+		//checksum += msg->data[i];		// TODO: This Checksum should include len and flags too
 	}
 	slip_tx_msg.data.push_back(msg->flags);
+	// Calculate checksum
+	for (int i = 0; i < slip_tx_msg.data.size(); i++){
+		checksum += slip_tx_msg.data[i];
+	}
 	slip_tx_msg.data.push_back(checksum);
-	slip_tx_msg.length = msg->len + 3;
+	slip_tx_msg.length = msg->data.size();
 	++slip_tx_msg.header.seq;
 	slip_tx_msg.header.stamp = ros::Time::now();
 	slip_tx.publish(slip_tx_msg);
