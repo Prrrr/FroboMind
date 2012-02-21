@@ -2,7 +2,7 @@
  * SerialBytes.h
  *
  *  Created on: Feb 20, 2012
- *      Author: ege
+ *      Author: Morten Ege Jensen
  */
 
 #ifndef SERIALBYTES_H_
@@ -29,9 +29,9 @@ private:
 	fmMsgs::serial_bin serial_msg;
 	ros::Publisher serial_pub;
 	ros::Subscriber serial_sub;
-
-	//vector<char> buffer;
-	boost::array<uint8_t, 7> buffer;
+	// TODO: This should not be a constant size
+	vector<uint8_t> buffer;
+	//boost::array<uint8_t, 7> buffer;
 	int baudrate;
 	int bytes;
 	void writeHandler(const fmMsgs::serial_bin::ConstPtr& msg);

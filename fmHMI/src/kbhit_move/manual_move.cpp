@@ -183,7 +183,7 @@ void Kbhit::keyHandle(char key){
 		twist_robot(0,-5);
 	}else if(key =='d'){
 		robot_drive(0,5);
-		twist_robot(0,0.05);
+		twist_robot(0,5);
 	}
 }
 
@@ -200,6 +200,12 @@ void Kbhit::stop_robot(){
 	msg.velocity = speed;
 	msg.angle = angle;
 	move_pub.publish(msg);
+	// Post data as twist
+	++twist_msg.header.seq;
+	twist_msg.header.stamp = ros::Time::now();
+	twist_msg.twist.linear.x = 0;
+	twist_msg.twist.angular.x = 0;
+	twist_pub.publish(twist_msg);
 }
 
 void Kbhit::readKeys(){

@@ -28,6 +28,14 @@ PrrrCtrl::PrrrCtrl() {
 	prrr_pub = nh.advertise<fmMsgs::prrr_protocol>(pub_topic.c_str(), 1);
 }
 
+double PrrrCtrl::checkValue(double v){
+	double return_value = v;
+	if (v < -100){
+		return_value = -100;
+	}else if (v > 100)
+		return_value = 100;
+	return return_value;
+}
 /************************************************************************''
  * Takes the twist values and calculates two speeds for differential steering
  * TODO: This needs adjusting
@@ -36,8 +44,8 @@ void PrrrCtrl::calculateCtrl(double lin, double ang){
 	static double v_left = 0, v_right = 0, speed = 0;
 	const double turn_constant = 0.03;
 	//Calculate speed for each wheel
-	v_left = lin + turn_constant*(ang)/10;
-	v_right = lin - turn_constant*(ang)/10;
+	v_left = checkValue(lin + turn_constant*(ang)/10);
+	v_right = checkValue(lin - turn_constant*(ang)/10);
 	// calculate the speed of the vehicle
 	speed = (v_left + v_right)/2;
 	int8_t left = v_left;

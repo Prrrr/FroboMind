@@ -19,6 +19,7 @@ private:
 	ros::Subscriber twist_sub;
 	ros::Subscriber prrr_sub;
 	ros::Publisher prrr_pub;
+	double checkValue(double v);
 	void calculateCtrl(double lin, double ang);
 	void twistCallback(const geometry_msgs::TwistStamped::ConstPtr& msg);
 	void prrrCallback(const fmMsgs::prrr_protocol::ConstPtr& msg);
