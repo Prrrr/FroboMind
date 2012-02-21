@@ -7,16 +7,16 @@
 		<node pkg="fmSensors" name="imu_razor_9dof_parser" type="imu_razor_9dof_node" output="screen" >
             <param name="subscribe_topic_id" value="/fmBSP/imu_raw_input" />
            	<param name="publish_topic_id" value="imu_razor_9dof" />
-			<!-- <param name="frame_id" value="/base_link" /> -->
+			<param name="imu_command_topic_id" value="/fmBSP/imu_commands" />
     	</node>
 	</group>
 
 	<group ns="fmBSP">
 		<node pkg="fmBSP" name="IMU_COM" type="serial_node" output="screen" >
 			<param name="publisher_topic" value="imu_raw_input" />	 
-			<param name="subscriber_topic" value="imu_tx" />	
+			<param name="subscriber_topic" value="imu_commands" />	
 			<param name="device" value="/dev/ttyUSB0" />	
-			<param name="baudrate" value="57600" />
+			<param name="baudrate" value="115200" />
 		</node>
 	</group>
 </launch>
