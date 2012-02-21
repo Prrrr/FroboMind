@@ -12,18 +12,31 @@ ros::Publisher imu_commands_pub;
 fmMsgs::imu_razor_9dof imu_msg;
 fmMsgs::serial imu_command_msg;
 
+double acc_x;	// Accelerometer, x-axis
+double acc_y;	// Accelerometer, y-axis
+double acc_z;	// Accelerometer, z-axis
+double gyr_x;	// Gyroscope, x-axis
+double gyr_y;	// Gyroscope, y-axis
+double gyr_z;	// Gyroscope, z-axis
+double com_x;	// Compass, x-axis
+double com_y;	// Compass, y-axis
+double com_z;	// Compass, z-axis
+
+int data_state = 0; // 0: We have not gotten any data yet.
+					// 1: Acceleromter filled.
+					// 2: Compass filled.
+					// 3: Gyroscope filled.
+
 typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 
 void send_command_to_imu(std::string c);
 void set_imu_enabled();
 void set_imu_disabled();
 void set_imu_data_verbose();
+void publish_data(const fmMsgs::serial::ConstPtr& msg);
+double string_to_double(std::string);
 
 void imuCallback(const fmMsgs::serial::ConstPtr& msg) {
-	
-	// imu_msg.header = msg->header;
-	// 
-	// imu_pub.publish(imu_msg);
 	
 	int part_count = 0;
 	
@@ -57,10 +70,150 @@ void imuCallback(const fmMsgs::serial::ConstPtr& msg) {
 		} else {
 			// We should be in the right state now.
 			
+			int data_failure = 0;
+			
+			switch (data_state) {
+				case 0:		// Wait for the first accelerometer data-string
+				if(!strcmp(data_header.c_str(), "ACC"))
+				{
+					std::string tok =  *tok_iter++;
+					boost::trim(tok);
+					try {
+						acc_x = boost::lexical_cast<double>(tok);
+					} catch (boost::bad_lexical_cast const&) {
+						 ROS_WARN("IMU Data: Bad lexical cast on: \"%s\", data header = \"%s\" state = \"%d\", string = ", tok.c_str(), data_header.c_str(), data_state);
+						 data_failure = 1;
+					}
+					tok =  *tok_iter++;
+					boost::trim(tok);
+					try {
+						acc_y = boost::lexical_cast<double>(tok);
+					} catch (boost::bad_lexical_cast const&) {
+						ROS_WARN("IMU Data: Bad lexical cast on: \"%s\", data header = \"%s\" state = \"%d\", string = ", tok.c_str(), data_header.c_str(), data_state);
+						 data_failure = 1;
+					}
+					tok =  *tok_iter;
+					boost::trim(tok);
+					try {
+						acc_z = boost::lexical_cast<double>(tok);
+					} catch (boost::bad_lexical_cast const&) {
+						ROS_WARN("IMU Data: Bad lexical cast on: \"%s\", data header = \"%s\" state = \"%d\", string = ", tok.c_str(), data_header.c_str(), data_state);
+						 data_failure = 1;
+					}
+					
+					if(data_failure)
+					{
+						// Revert to state 0 and start on a new, fresh, frame
+						data_state = 0;
+						data_failure = 0;
+					} else {
+						data_state++;	
+					}
+				}
+				break;
+				
+				case 1:
+				if(!strcmp(data_header.c_str(), "MAG"))
+				{
+					std::string tok =  *tok_iter++;
+					boost::trim(tok);
+					try {
+						com_x = boost::lexical_cast<double>(tok);
+					} catch (boost::bad_lexical_cast const&) {
+						ROS_WARN("IMU Data: Bad lexical cast on: \"%s\", data header = \"%s\" state = \"%d\", string = ", tok.c_str(), data_header.c_str(), data_state);
+						 data_failure = 1;
+					}
+					tok =  *tok_iter++;
+					boost::trim(tok);
+					try {
+						com_y = boost::lexical_cast<double>(tok);
+					} catch (boost::bad_lexical_cast const&) {
+						ROS_WARN("IMU Data: Bad lexical cast on: \"%s\", data header = \"%s\" state = \"%d\", string = ", tok.c_str(), data_header.c_str(), data_state);
+						 data_failure = 1;
+					}
+					tok =  *tok_iter;
+					boost::trim(tok);
+					try {
+						com_z = boost::lexical_cast<double>(tok);
+					} catch (boost::bad_lexical_cast const&) {
+						ROS_WARN("IMU Data: Bad lexical cast on: \"%s\", data header = \"%s\" state = \"%d\", string = ", tok.c_str(), data_header.c_str(), data_state);
+						 data_failure = 1;
+					}
+					
+					if(data_failure)
+					{
+						// Revert to state 0 and start on a new, fresh, frame
+						data_state = 0;
+						data_failure = 0;
+					} else {
+						data_state++;	
+					}
+				}
+				break;
+				
+				case 2:
+				if(!strcmp(data_header.c_str(), "GYR"))
+				{
+					std::string tok =  *tok_iter++;
+					boost::trim(tok);
+					try {
+						gyr_x = boost::lexical_cast<double>(tok);
+					} catch (boost::bad_lexical_cast const&) {
+						ROS_WARN("IMU Data: Bad lexical cast on: \"%s\", data header = \"%s\" state = \"%d\", string = ", tok.c_str(), data_header.c_str(), data_state);
+						 data_failure = 1;
+					}
+					tok =  *tok_iter++;
+					boost::trim(tok);
+					try {
+						gyr_y = boost::lexical_cast<double>(tok);
+					} catch (boost::bad_lexical_cast const&) {
+						ROS_WARN("IMU Data: Bad lexical cast on: \"%s\", data header = \"%s\" state = \"%d\", string = ", tok.c_str(), data_header.c_str(), data_state);
+						 data_failure = 1;
+					}
+					tok =  *tok_iter;
+					boost::trim(tok);
+					try {
+						gyr_z = boost::lexical_cast<double>(tok);
+					} catch (boost::bad_lexical_cast const&) {
+						ROS_WARN("IMU Data: Bad lexical cast on: \"%s\", data header = \"%s\" state = \"%d\", string = ", tok.c_str(), data_header.c_str(), data_state);
+						 data_failure = 1;
+					}
+					
+					if(data_failure)
+					{
+						// Revert to state 0 and start on a new, fresh, frame
+						data_failure = 0;
+					} else {
+						// Publish data
+						publish_data(msg);
+					}
+					data_state = 0;	
+				}
+				break;
+				
+				default:
+					ROS_WARN("IMU Data out of sync. Data header: \"%s\", state = \"%d\"", data_header.c_str(), data_state);
+				break;
+			}
+			
 		}
 	} else {
-		ROS_DEBUG("Malformed datastring from IMU: %d parts found.", part_count);
+		ROS_WARN("Malformed datastring from IMU: %d parts found.", part_count);
 	}
+}
+
+void publish_data(const fmMsgs::serial::ConstPtr& msg) {
+	imu_msg.header = msg->header;
+	imu_msg.acc_x = acc_x;
+	imu_msg.acc_y = acc_y;
+	imu_msg.acc_z = acc_z;
+	imu_msg.gyr_x = gyr_x;
+	imu_msg.gyr_y = gyr_y;
+	imu_msg.gyr_z = gyr_z;
+	imu_msg.com_x = com_x;
+	imu_msg.com_y = com_y;
+	imu_msg.com_z = com_z;
+	imu_pub.publish(imu_msg);
 }
 
 void set_imu_data_verbose() {
@@ -81,7 +234,7 @@ void set_imu_disabled() {
 void send_command_to_imu(std::string c) {
 	imu_command_msg.data = c;
 	imu_commands_pub.publish(imu_command_msg);
-	ROS_INFO("Command send to IMU: %s", imu_command_msg.data.c_str());
+	ROS_DEBUG("Command send to IMU: %s", imu_command_msg.data.c_str());
 }
 
 int main(int argc, char **argv)
