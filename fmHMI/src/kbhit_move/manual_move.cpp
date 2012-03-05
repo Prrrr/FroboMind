@@ -133,16 +133,17 @@ void Kbhit::twist_check(double& lin, double& ang){
 void Kbhit::twist_robot(double d_lin, double d_ang){
 	twist_linear = twist_linear + d_lin;
 	// If no angle change, keep true (drive straight)
-	if (d_ang != 0)
-		twist_angular = twist_angular + d_ang;
-	else
+	if (d_ang != 0){
+		//twist_angular = twist_angular + d_ang;
+		twist_angular = d_ang;
+	}else
 		twist_angular = 0;
 	//Check values
 	twist_check(twist_linear, twist_angular);
 	// Publish message
 	twist_msg.header.stamp = ros::Time::now();
 	twist_msg.twist.linear.x = twist_linear;
-	twist_msg.twist.angular.x = twist_angular;
+	twist_msg.twist.angular.z = twist_angular;
 	twist_pub.publish(twist_msg);
 }
 

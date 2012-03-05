@@ -15,6 +15,7 @@ private:
  fmMsgs::serial_bin tx_msg;
  fmMsgs::serial_bin rx_msg;
  ros::Publisher enc_pub;
+ ros::Publisher data_pub;
 
 public:
 
