@@ -23,6 +23,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 rosbuild_add_executable(prrr_protocol_node src/Prrr/Prrr_robocard_protocol/PrrrRobocardProtocol.cpp)
 rosbuild_add_executable(prrr_ctrl_node src/Prrr/Prrr_robocard_ctrl/PrrrCtrl.cpp)
+rosbuild_add_executable(hilde_ctrl_node src/Hilde/hilde_controller.cpp)
 
 #common commands for building c++ executables and libraries
 #rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
