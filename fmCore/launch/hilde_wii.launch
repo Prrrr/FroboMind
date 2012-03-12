@@ -2,10 +2,10 @@
 
 	<group ns="hilde">
 
-		<node pkg="fmBSP" type="serial_node" name="hilde_serial_node" output="screen">
+		<node pkg="fmBSP" type="serial_node" name="hilde_serial_node">
 			<param name="publisher_topic" value="serial_rx" />	 
 			<param name="subscriber_topic" value="serial_tx" />	
-			<param name="device" value="/dev/ttyUSB0" />	
+			<param name="device" value="/dev/ttyUSB1" />	
 			<param name="baudrate" value="115200" />
 		</node>
 
@@ -19,8 +19,25 @@
 			<param name="base_link_radius_to_wheels" value="0.185" type="double"/>
 			<param name="base_link_length_to_rear_wheel" value="0.28" type="double"/>
 		</node>
+	</group>
 
- 	</group>
+	<group ns="IMU">
+		
+		<node pkg="fmSensors" name="imu2_razor_9dof_parser" type="imu_razor_9dof_node" output="screen" >
+	        	<param name="subscribe_topic_id" value="imu_raw_input" type="string" />
+           		<param name="publish_topic_id" value="imu_razor_9dof" type="string" />
+			<param name="imu_command_topic_id" value="imu_commands" type="string" />
+    		</node>
+		
+		<node pkg="fmBSP" name="IMU_COM" type="serial_node" output="screen" >
+			<param name="publisher_topic" value="imu_raw_input" />	 
+			<param name="subscriber_topic" value="imu_commands" />	
+			<param name="device" value="/dev/ttyUSB0" />	
+			<param name="baudrate" value="115200" />
+		</node>
+		
+	</group>
+
         <group ns="wiimote">
 
 		<!-- Needed for wiimote_to_twist node -->
