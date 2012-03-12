@@ -251,9 +251,9 @@ int main(int argc, char **argv)
 	n.param<std::string> ("publish_topic_id", publish_topic_id, "/fmSensors/imu_razor_9dof_msg");
 	n.param<std::string> ("imu_command_topic_id", imu_command_topic_id, "/fmBSP/imu_commands");
 
-	ros::Subscriber sub = n.subscribe(subscribe_topic_id, 10, imuCallback);
-	imu_pub = n.advertise<fmMsgs::imu_razor_9dof> (publish_topic_id, 1);
-	imu_commands_pub = n.advertise<fmMsgs::serial> (imu_command_topic_id, 1);
+	ros::Subscriber sub = nh.subscribe(subscribe_topic_id.c_str(), 10, imuCallback);
+	imu_pub = nh.advertise<fmMsgs::imu_razor_9dof> (publish_topic_id.c_str(), 1);
+	imu_commands_pub = nh.advertise<fmMsgs::serial> (imu_command_topic_id.c_str(), 1);
 	
 	ros::spin();
 	return 0;
