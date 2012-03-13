@@ -185,8 +185,14 @@ void HildeController::serialCallback(const fmMsgs::serial::ConstPtr& serial_data
 			{
 				actual_left_velocity += left_encoder_ticks[i];
 			}
-
+			
+			ROS_WARN("Left encoder: %f ticks.", actual_left_velocity);
+			double speed = 0.0490874 * actual_left_velocity;
+			speed = speed / (left_encoder_time[4] - left_encoder_time[0]);
+			speed = speed * 0.085;
 			actual_left_velocity = actual_left_velocity * 0.52 / (left_encoder_time[0] - left_encoder_time[4]);
+			ROS_WARN("Left encoder: %f seconds.", (left_encoder_time[4] - left_encoder_time[0]));
+			ROS_WARN("Left encoder: %f m/s.", speed);
 
 			//actual_left_velocity = left_encoder_ticks[0];
 		}

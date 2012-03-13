@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<launch>
+	<group ns="hilde">
+		<node pkg="fmBSP" type="serial_node" name="hilde_serial_node">
+			<param name="publisher_topic" value="serial_rx"/>
+			<param name="subscriber_topic" value="serial_tx"/>
+			<param name="device" value="/dev/ttyUSB1"/>
+			<param name="baudrate" value="115200"/>
+		</node>
+		<node pkg="fmPSP" type="hilde_ctrl_node" name="hilde_controller" output="screen">
+			<param name="twist_subscriber_topic" value="/cmd_vel" type="string"/>
+			<param name="serial_subscriber_topic" value="serial_rx" type="string"/>
+			<param name="serial_publisher_topic" value="serial_tx" type="string"/>
+			<param name="max_linear_velocity" value="1.0" type="double"/>
+			<param name="bias_linear_velocity" value="1.0" type="double"/>
+			<param name="bias_linear_velocity_percentage" value="1" type="double"/>
+			<param name="base_link_radius_to_wheels" value="0.185" type="double"/>
+			<param name="base_link_length_to_rear_wheel" value="0.28" type="double"/>
+		</node>
+	</group>
+	<group ns="IMU">
+		<node pkg="fmSensors" name="imu2_razor_9dof_parser" type="imu_razor_9dof_node" output="screen">
+			<param name="subscribe_topic_id" value="imu_raw_input" type="string"/>
+			<param name="publish_topic_id" value="imu_razor_9dof" type="string"/>
+			<param name="imu_command_topic_id" value="imu_commands" type="string"/>
+		</node>
+		<node pkg="fmBSP" name="IMU_COM" type="serial_node" output="screen">
+			<param name="publisher_topic" value="imu_raw_input"/>
+			<param name="subscriber_topic" value="imu_commands"/>
+			<param name="device" value="/dev/ttyUSB0"/>
+			<param name="baudrate" value="115200"/>
+		</node>
+	</group>
+	<group ns="kbhit">
+		<node pkg="fmHMI" name="kbhit_node" type="kbhit_move" output="screen">
+			<param name="topic" value="kbhit_topic"/>
+			<param name="twist_topic" value="/cmd_vel"/>
+			<param name="max_speed" value="100"/>
+			<param name="min_speed" value="-100"/>
+			<param name="turn_constant" value="3"/>
+			<param name="ramp" value="20"/>
+		</node>
+	</group>
+</launch>
