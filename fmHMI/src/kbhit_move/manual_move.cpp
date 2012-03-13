@@ -10,6 +10,7 @@
 #include <ros/ros.h>
 #include <string.h>
 #include "fmMsgs/kbhit.h"
+#include "math.h"
 #include <geometry_msgs/TwistStamped.h>
 
 extern "C"{
@@ -134,12 +135,15 @@ void Kbhit::twist_robot(double d_lin, double d_ang){
 	twist_linear = twist_linear + d_lin;
 	// If no angle change, keep true (drive straight)
 	if (d_ang != 0){
-		//twist_angular = twist_angular + d_ang;
-		twist_angular = d_ang;
+		twist_angular = twist_angular + d_ang;
+		//twist_angular = d_ang;
 	}else
 		twist_angular = 0;
 	//Check values
 	twist_check(twist_linear, twist_angular);
+	// Convert from degrees to radians
+	twist_angular = twist_angular * M_PI / 180;
+	//ROS_INFO("TWIST: %f, %f", twist_linear, twist_angular);
 	// Publish message
 	twist_msg.header.stamp = ros::Time::now();
 	twist_msg.twist.linear.x = twist_linear;
