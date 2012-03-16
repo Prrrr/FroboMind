@@ -31,15 +31,15 @@ int main(int argc, char **argv)
 
 	node.setFrameId(frame_id);
 
-	node.setAccTopic (n.advertise<fmMsgs::accelerometer>(pub_acc , 1));
-	node.setGyroTopic(n.advertise<fmMsgs::gyroscope>    (pub_gyro, 1));
-	node.setMagTopic (n.advertise<fmMsgs::magnetometer> (pub_mag , 1));
+	node.setAccTopic (nh.advertise<fmMsgs::accelerometer>(pub_acc , 1));
+	node.setGyroTopic(nh.advertise<fmMsgs::gyroscope>    (pub_gyro, 1));
+	node.setMagTopic (nh.advertise<fmMsgs::magnetometer> (pub_mag , 1));
 
 	node.enableAccelerometer(use_acc);
 	node.enableGyro(use_gyro);
 	node.enableMag(use_mag);
 
-	ros::Subscriber sub = n.subscribe(sub_id.c_str(), 1, &SparkFun9DOF::newMsgCallback,&node);
+	ros::Subscriber sub = nh.subscribe(sub_id.c_str(), 1, &SparkFun9DOF::newMsgCallback,&node);
 
 	ros::spin();
 
