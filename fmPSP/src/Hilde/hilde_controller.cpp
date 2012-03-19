@@ -77,6 +77,7 @@ private:
 	std::string wiimote_subscriber_topic;
 	std::string serial_publisher_topic;
 	std::string serial_test_publisher_topic;
+	double wheel_circumference;
 	double max_linear_velocity, max_angular_velocity;
 	double base_link_radius_to_wheels;
 	double base_link_length_to_rear_wheel;
@@ -130,6 +131,7 @@ HildeController::HildeController()
 	local_n.param("bias_linear_velocity_percentage", bias_linear_velocity_percentage, 0.8);
 	local_n.param("base_link_radius_to_wheels", base_link_radius_to_wheels, 0.185);
 	local_n.param("base_link_length_to_rear_wheel", base_link_length_to_rear_wheel, 0.28);
+	local_n.param("wheel_circumference", wheel_circumference, 100.534070751);
 
 	//	Subscribers and publisher
 	twist_subscriber = global_n.subscribe<geometry_msgs::TwistStamped>(twist_subscriber_topic, 100, &HildeController::twistCallback, this);
@@ -185,8 +187,11 @@ void HildeController::serialCallback(const fmMsgs::serial::ConstPtr& serial_data
 			{
 				actual_left_velocity += left_encoder_ticks[i];
 			}
+			
+			ROS_WARN("Left encoder: %f m/s.", ((actual_left_velocity / 256) * wheel_circumference) / (left_encoder_time[4] - left_encoder_time[0]));
 
 			actual_left_velocity = actual_left_velocity * 0.52 / (left_encoder_time[0] - left_encoder_time[4]);
+			ROS_INFO("Left: %d %d %d", serial_data -> data[0], serial_data -> data[1], serial_data -> data[2]);
 
 			//actual_left_velocity = left_encoder_ticks[0];
 		}
@@ -201,9 +206,11 @@ void HildeController::serialCallback(const fmMsgs::serial::ConstPtr& serial_data
 			{
 				actual_right_velocity += right_encoder_ticks[i];
 			}
-
+			
+			ROS_WARN("Right encoder: %f m/s.", ((actual_right_velocity / 256) * wheel_circumference) / (right_encoder_time[4] - right_encoder_time[0]));
+			
 			actual_right_velocity = actual_right_velocity * 0.52 / (right_encoder_time[0] - right_encoder_time[4]);
-
+			ROS_INFO("Right: %d %d %d", serial_data -> data[0], serial_data -> data[1], serial_data -> data[2]);
 			//actual_right_velocity = right_encoder_ticks[0];
 		}
 	}
@@ -211,7 +218,7 @@ void HildeController::serialCallback(const fmMsgs::serial::ConstPtr& serial_data
 	actual_angular_velocity = (actual_right_velocity - actual_left_velocity) / (2 * base_link_radius_to_wheels);
 
 	//ROS_INFO("LV: %f RV: %f, AV: %f", actual_left_velocity, actual_right_velocity, actual_angular_velocity);
-	ROS_INFO("%s", serial_data -> data.c_str());
+	//ROS_INFO("%s", serial_data -> data.c_str());
 }
 
 void HildeController::twistCallback(const geometry_msgs::TwistStamped::ConstPtr& twist_data)
