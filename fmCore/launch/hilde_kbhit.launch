@@ -17,6 +17,7 @@
 			<param name="base_link_radius_to_wheels" value="0.185" type="double"/>
 			<param name="base_link_length_to_rear_wheel" value="0.28" type="double"/>
 			<param name="wheel_circumference" value="0.534070751" type="double"/>
+			<param name="timer" value="0.1" type="double" />
 		</node>
 	</group>
 	<!-- <group ns="IMU">
@@ -31,7 +32,7 @@
 			<param name="device" value="/dev/ttyUSB0"/>
 			<param name="baudrate" value="115200"/>
 		</node>
-	</group>
+	</group> -->
 	<group ns="kbhit">
 		<node pkg="fmHMI" name="kbhit_node" type="kbhit_move" output="screen">
 			<param name="topic" value="kbhit_topic"/>
@@ -41,5 +42,5 @@
 			<param name="turn_constant" value="3"/>
 			<param name="ramp" value="20"/>
 		</node>
-	</group> -->
+	</group>
 </launch>

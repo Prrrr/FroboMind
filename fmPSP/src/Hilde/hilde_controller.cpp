@@ -41,6 +41,8 @@
 #include "fmMsgs/serial.h"
 //#include "joy/Joy.h"
 #include "boost/circular_buffer.hpp"
+#include "pid.h"
+#include "fmMsgs/float_data.h"
 
 enum WiimoteButtons
 {
@@ -64,7 +66,12 @@ private:
 	ros::Subscriber wiimote_subscriber;
 	ros::Publisher serial_publisher;
 	ros::Publisher serial_test_publisher;
+	ros::Publisher odometry_data_publisher;
+	ros::Timer rostimer;
 
+	// Odemetry Data message
+	fmMsgs::float_data odom_msg;
+		
 	//	Serial messages
 	fmMsgs::serial serial_msg_tx;
 
@@ -99,20 +106,25 @@ private:
 	int counter;
 	bool direction;
 	int callback_counter;
-	double left_motor_velocity, right_motor_velocity, rear_wheel_angle, temp_rear_wheel_angle, actual_left_velocity, actual_right_velocity, actual_angular_velocity;
+	double left_motor_velocity, right_motor_velocity, rear_wheel_angle, temp_rear_wheel_angle, actual_left_velocity, actual_right_velocity, actual_angular_velocity, dtLeft, dtRight;
 	boost::circular_buffer<double> left_encoder_time;
 	boost::circular_buffer<double> right_encoder_time;
 	boost::circular_buffer<double> left_encoder_ticks;
 	boost::circular_buffer<double> right_encoder_ticks;
+	bool new_value_recv_right, new_value_recv_left;
+	double timer;
+
 
 	//  Callback methods
 	void twistCallback(const geometry_msgs::TwistStamped::ConstPtr& twist_data);
 	void serialCallback(const fmMsgs::serial::ConstPtr& serial_data);
+	void timerCallback(const ros::TimerEvent& te);
 	//void wiimoteCallback(const joy::Joy::ConstPtr& wiimote_data);
 
 	//	Methods
 	void sendSerialCommand(char type, char command, char value, bool publish_to_test_topic);
 	void calculateMotorPWM();
+
 };
 
 HildeController::HildeController()
@@ -132,6 +144,7 @@ HildeController::HildeController()
 	local_n.param("base_link_radius_to_wheels", base_link_radius_to_wheels, 0.185);
 	local_n.param("base_link_length_to_rear_wheel", base_link_length_to_rear_wheel, 0.28);
 	local_n.param("wheel_circumference", wheel_circumference, 100.534070751);
+	local_n.param("timer", timer, 1.0);
 
 	//	Subscribers and publisher
 	twist_subscriber = global_n.subscribe<geometry_msgs::TwistStamped>(twist_subscriber_topic, 100, &HildeController::twistCallback, this);
@@ -139,6 +152,9 @@ HildeController::HildeController()
 	//wiimote_subscriber = global_n.subscribe<joy::Joy>(wiimote_subscriber_topic, 100, &HildeController::wiimoteCallback, this);
 	serial_publisher = global_n.advertise<fmMsgs::serial>(serial_publisher_topic, 100);
 	serial_test_publisher = global_n.advertise<fmMsgs::serial>(serial_test_publisher_topic, 100);
+	odometry_data_publisher = global_n.advertise<fmMsgs::float_data>("odom_data_topic", 100);
+	// Timer creation
+	rostimer = global_n.createTimer(ros::Duration(timer), &HildeController::timerCallback, this);
 
 	//	Instantiate buffers
 	left_encoder_ticks = boost::circular_buffer<double>(10);
@@ -155,6 +171,8 @@ HildeController::HildeController()
 	output_motor_left = 0;
 	output_motor_right = 0;
 	output_servo_angle = 0;
+	new_value_recv_left = 0;
+	new_value_recv_right = 0;
 
 	//	Initialize buffers
 	for (int i = 0; i <= 9; i++)
@@ -164,9 +182,93 @@ HildeController::HildeController()
 		left_encoder_time.push_back(0.0);
 		right_encoder_time.push_back(0.0);
 	}
+
 }
 
 //	Callback methods
+void HildeController::timerCallback(const ros::TimerEvent& te){
+	static double desired_Vl = 0, desired_Vr = 0, actual_Vl = 0, actual_Vr = 0, diff_Vl = 0, diff_Vr = 0, output_Vl = 0, output_Vr = 0, max_speed = 0.54;
+	double r = 0.085;		// Radius of wheels... Get from the params
+	double b = 2*base_link_radius_to_wheels;		// Distance between wheels... Get from the params
+	double L = base_link_length_to_rear_wheel;			// Length to rear wheel... Get from param
+	double V, w;
+	
+	static int out_Vr = 0;
+	static int out_Vl = 0;
+	
+	static PID pid_left;
+	static PID pid_right;
+
+	pid_left(1., 0., 0.);
+	pid_right(1., 0., 0.);
+	
+	
+	// Use the linear and angular velocities from the twist msg
+	V = linear_velocity_x * max_speed;
+	w = angular_velocity_z;
+	desired_Vl = (1/r * V - b/(2*r)*w)*r;		// These are the desired velocities of the vehicle
+	desired_Vr = (1/r * V + b/(2*r)*w)*r;		// Assuming that the twist msg.lin.x is between 0 and 1
+	
+	ROS_WARN("Serial callback!");
+	
+	if (new_value_recv_left){		// If new values are recieved, run the loop
+		new_value_recv_left = 0;
+		// get actual_left_velocity and actual_right_velocity
+		//ROS_WARN("Timer: left: %f", actual_left_velocity);
+		actual_Vl = actual_left_velocity;
+
+		// Run the PID control
+		diff_Vl = desired_Vl - actual_Vl;
+		output_Vl = actual_Vl + pid_left.run(diff_Vl,dtLeft);
+		output_Vl = desired_Vl;
+//		ROS_WARN("Left: %f %f %f %f %f %f", actual_Vl, V, w, desired_Vl, diff_Vl, output_Vl);
+		if (output_Vl > max_speed) output_Vl = max_speed;
+		
+		// Calculate the output values to and send over the uart line
+		out_Vl = (output_Vl*255)/max_speed;
+		//ROS_WARN("Vl: %f %d", output_Vl, out_Vl);
+		ROS_WARN("Actual_Vl: %f desired_vl: %f output_vl: %f", actual_Vl, desired_Vl, output_Vl);
+	}
+	
+	if (new_value_recv_right){		// If new values are recieved, run the loop
+		new_value_recv_right = 0;
+		// get actual_left_velocity and actual_right_velocity
+		//ROS_WARN("Timer: right: %f", actual_right_velocity);
+		actual_Vr = actual_right_velocity;
+
+		// Run the PID control
+		diff_Vr = desired_Vr - actual_Vr;
+		output_Vr = actual_Vr + pid_right.run(diff_Vr,dtRight);
+		output_Vr = desired_Vr;
+//		ROS_WARN("Left: %f %f %f %f %f %f", actual_Vl, V, w, desired_Vl, diff_Vl, output_Vl);
+		if (output_Vr > max_speed) output_Vr = max_speed;
+		
+		// Calculate the output values to and send over the uart line
+		out_Vr = (output_Vr*255)/max_speed;
+		ROS_WARN("Actual_VR: %f desired_vr: %f output_vr: %f", actual_Vr, desired_Vr, output_Vr);
+	}
+	
+		int out_angle = 128 + atan2(w*L,V)*180/M_PI;
+		ROS_WARN("Left speed : %d Right speed: %d Angle: %d", out_Vl, out_Vr, out_angle);
+		sendSerialCommand((char)0xAA, (char)0x10, (char)out_Vl, true);
+		sendSerialCommand((char)0xAA, (char)0x30, (char)out_Vr, true);
+		sendSerialCommand((char)0xAA, (char)0x50, (char)out_angle, true);
+		
+		
+		++odom_msg.header.seq;
+		odom_msg.header.stamp = ros::Time::now();
+		odom_msg.data.clear();
+		odom_msg.data.push_back(actual_Vl);
+		odom_msg.data.push_back(actual_Vr);
+		odom_msg.data.push_back(desired_Vl);
+		odom_msg.data.push_back(desired_Vr);
+		odom_msg.data.push_back(output_Vl);
+		odom_msg.data.push_back(output_Vr);
+		odom_msg.data.push_back(out_angle);
+		odom_msg.size = 7;
+		odometry_data_publisher.publish(odom_msg);
+}
+
 void HildeController::serialCallback(const fmMsgs::serial::ConstPtr& serial_data)
 {
 	//	Handle incomming data on serial port
@@ -182,16 +284,20 @@ void HildeController::serialCallback(const fmMsgs::serial::ConstPtr& serial_data
 			left_encoder_time.push_back((double)ros::Time::now().toSec());
 
 			actual_left_velocity = 0;
-
 			for (int i = 0; i <= 4; i++)
 			{
 				actual_left_velocity += left_encoder_ticks[i];
 			}
 			
-			ROS_WARN("Left encoder: %f m/s.", ((actual_left_velocity / 256) * wheel_circumference) / (left_encoder_time[4] - left_encoder_time[0]));
+//			ROS_WARN("Left encoder: %f m/s.", ((actual_left_velocity / 256) * wheel_circumference) / (left_encoder_time[4] - left_encoder_time[0]));
+			dtLeft =  (left_encoder_time[4] - left_encoder_time[0]);
+			
+			new_value_recv_left = 1;		// Set the boolean to true
+			//actual_left_velocity = actual_left_velocity * 0.52 / dtLeft;
+			actual_left_velocity = ((actual_left_velocity / 256) * wheel_circumference) / dtLeft;
 
-			actual_left_velocity = actual_left_velocity * 0.52 / (left_encoder_time[0] - left_encoder_time[4]);
-			ROS_INFO("Left: %d %d %d", serial_data -> data[0], serial_data -> data[1], serial_data -> data[2]);
+			ROS_WARN("Encoder lv: %f", actual_left_velocity);
+//			ROS_INFO("Left: %d %d %d", serial_data -> data[0], serial_data -> data[1], serial_data -> data[2]);
 
 			//actual_left_velocity = left_encoder_ticks[0];
 		}
@@ -202,15 +308,20 @@ void HildeController::serialCallback(const fmMsgs::serial::ConstPtr& serial_data
 			right_encoder_ticks.push_back((double)input_serial_buffer[2]);
 			right_encoder_time.push_back((double)ros::Time::now().toSec());
 
+			actual_right_velocity = 0;
 			for (int i = 0; i <= 4; i++)
 			{
 				actual_right_velocity += right_encoder_ticks[i];
 			}
 			
-			ROS_WARN("Right encoder: %f m/s.", ((actual_right_velocity / 256) * wheel_circumference) / (right_encoder_time[4] - right_encoder_time[0]));
+			dtRight =  (right_encoder_time[4] - right_encoder_time[0]);
 			
-			actual_right_velocity = actual_right_velocity * 0.52 / (right_encoder_time[0] - right_encoder_time[4]);
-			ROS_INFO("Right: %d %d %d", serial_data -> data[0], serial_data -> data[1], serial_data -> data[2]);
+//			ROS_WARN("Right encoder: %f m/s.", ((actual_right_velocity / 256) * wheel_circumference) / (right_encoder_time[4] - right_encoder_time[0]));
+			new_value_recv_right = 1;
+			//actual_right_velocity = actual_right_velocity * 0.52 / dtRight;
+			actual_right_velocity = ((actual_right_velocity / 256) * wheel_circumference) / dtRight;
+			ROS_WARN("Encoder rv: %f", actual_right_velocity);
+//			ROS_INFO("Right: %d %d %d", serial_data -> data[0], serial_data -> data[1], serial_data -> data[2]);
 			//actual_right_velocity = right_encoder_ticks[0];
 		}
 	}
@@ -226,7 +337,7 @@ void HildeController::twistCallback(const geometry_msgs::TwistStamped::ConstPtr&
 	angular_velocity_z = (twist_data -> twist.angular.z);
 	linear_velocity_x = (twist_data -> twist.linear.x);
 	ROS_INFO("twistCallback: %f %f", linear_velocity_x, angular_velocity_z);
-	calculateMotorPWM();
+//	calculateMotorPWM();	// This function is now in the timerCallback
 }
 
 //void HildeController::wiimoteCallback(const joy::Joy::ConstPtr& wiimote_data)
