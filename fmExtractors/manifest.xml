@@ -21,6 +21,8 @@
   <depend package="opencv2"/>
   <depend package="cv_bridge"/>
   <depend package="visualization_msgs"/>
+  <depend package="rospy"/>
+  <depend package="std_msgs"/>
 
 </package>
 

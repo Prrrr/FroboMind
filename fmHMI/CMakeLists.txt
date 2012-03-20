@@ -21,7 +21,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #uncomment if you have defined services
 #rosbuild_gensrv()
 
-rosbuild_add_executable(wiimote_to_twist src/wiimote_to_twist.cpp)
+#rosbuild_add_executable(wiimote_to_twist src/wiimote_to_twist.cpp)
 rosbuild_add_executable(kbhit_move src/kbhit_move/manual_move.cpp)
 rosbuild_add_executable(kbhit_move src/kbhit_move/kbhit.c)
 
