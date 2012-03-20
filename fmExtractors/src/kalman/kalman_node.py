@@ -145,7 +145,7 @@ acc_data =  [0.,0.,0.]
 gyro_data = [0.,0.,0.]
 comp_data = [0.,0.,0.]
 
-dt = 0.01;
+dt = 10;
 
 F = matrix([[1., 0.], [0, 1.]]) # next state function
 B = matrix([[dt, 0.], [0, dt]]) # control-input-coeff.
@@ -182,31 +182,31 @@ def filter():
 def acc_callback(data):
     global acc_data
     acc_data = [data.x, data.y, data.z]
-    #rospy.loginfo("Got acc data: " + str(data.x) + ", " + str(data.y) + ", " + str(data.z))
     
 def gyro_callback(data):
     global gyro_data
     gyro_data = [data.x, data.y, data.z]
-    #rospy.loginfo("Got gyro data: " + str(data.x) + ", " + str(data.y) + ", " + str(data.z))
 
 def comp_callback(data):
     global comp_data
     comp_data = [data.x, data.y, data.z]
-    #rospy.loginfo("Got compass data: " + str(data.x) + ", " + str(data.y) + ", " + str(data.z))
 
 def timer_callback(event):
     rospy.logwarn("Timer times!")
     filter()
-    # rospy.loginfo("Acc data: " + str(acc_data))
-    # rospy.loginfo("Gyro data: " + str(gyro_data))
-    # rospy.loginfo("Compass data: " + str(comp_data))
         
 def kalman_main():
     global dt
     rospy.init_node('kalman_main')
-    rospy.Subscriber("/fmSensors/Accelerometer", accelerometer, acc_callback)
-    rospy.Subscriber("/fmSensors/Gyroscope", gyroscope, gyro_callback)
-    rospy.Subscriber("/fmSensors/Magnetometer", magnetometer, comp_callback)
+    
+    sub_accelerometer_topic_id  = rospy.get_param('~sub_accelerometer_topic_id' , "/default/Accelerometer")
+    sub_gyroscope_topic_id = rospy.get_param('~sub_gyroscope_topic_id' , "/default/Gyroscope")
+    sub_magnetometer_topic_id = rospy.get_param('~sub_magnetometer_topic_id' , "/default/Magnetometer")
+    dt = float(rospy.get_param('~dt', 1.0))
+    
+    rospy.Subscriber(sub_accelerometer_topic_id, accelerometer, acc_callback)
+    rospy.Subscriber(sub_gyroscope_topic_id, gyroscope, gyro_callback)
+    rospy.Subscriber(sub_magnetometer_topic_id, magnetometer, comp_callback)
     
     rospy.Timer(rospy.rostime.Duration(dt), timer_callback)
     

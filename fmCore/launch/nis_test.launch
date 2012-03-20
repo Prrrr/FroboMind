@@ -32,7 +32,12 @@
 			<param name="device" value="/dev/ttyUSB0"/>
 			<param name="baudrate" value="57600"/>
 		</node>
-		<node pkg="fmExtractors" name="kalman_node" type="kalman_node.py" output="screen"></node>
+		<node pkg="fmExtractors" name="kalman_node" type="kalman_node.py" output="screen">
+			<param name="dt" value="0.1"/>
+			<param name="sub_accelerometer_topic_id" value="/fmSensors/Accelerometer"/>
+			<param name="sub_gyroscope_topic_id" 	 value="/fmSensors/Gyroscope"/>
+			<param name="sub_magnetometer_topic_id"  value="/fmSensors/Magnetometer"/>
+		</node>
 	</group>
 	
 	<!-- <group ns="kbhit">
