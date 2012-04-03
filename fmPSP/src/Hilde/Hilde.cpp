@@ -9,6 +9,8 @@
 #include "math.h"
 #include "geometry_msgs/TwistStamped.h"
 #include "fmMsgs/serial_bin.h"
+#include "boost/circular_buffer.hpp"
+	 
 using namespace std;
 class Hilde {
 private:
@@ -28,12 +30,22 @@ private:
 	double wheel_radius;
 	double max_velocity;
 	double icr_radius_to_wheels;
+	int encoder_circular_buffer_size;
+	double encoder_dt; // How often new ticks are received from the robocard
+	
 	// Callback Functions
 	void twistCallback(const geometry_msgs::TwistStamped::ConstPtr& msg);
 	void serialCallback(const fmMsgs::serial_bin::ConstPtr& msg);
 	// Functions
 	void calculateMotorFromTwist(double linear_vel, double angular_vel);
 	double check_velocity(double vel);
+	
+
+	// Circular buffers for the encoders
+	boost::circular_buffer<int> left_encoder_ticks;
+	boost::circular_buffer<int> right_encoder_ticks;
+	
+	
 public:
 	Hilde();
 	virtual ~Hilde();
@@ -73,10 +85,24 @@ Hilde::Hilde() {
 	local_n.param<double>("wheel_radius", wheel_radius, 0.085);
 	local_n.param<double>("icr_radius_to_wheels", icr_radius_to_wheels, 0.185);
 	local_n.param<double>("max_velocity", max_velocity, 0.75);
+	local_n.param<int>("encoder_circular_buffer_size", encoder_circular_buffer_size, 10);
+	local_n.param<double>("encoder_dt", encoder_dt, 0.02);
 	// Subscribers and publisher
 	twist_subscriber = global_n.subscribe<geometry_msgs::TwistStamped>(twist_subscriber_topic.c_str(), 100, &Hilde::twistCallback,this);
 	robocard_subscriber = global_n.subscribe<fmMsgs::serial_bin>(robocard_subscriber_topic.c_str(), 100, &Hilde::serialCallback, this);
 	robocard_publisher = global_n.advertise<fmMsgs::serial_bin>(robocard_publisher_topic.c_str(), 1000);
+	
+	// Instantiate circular buffers for the encoders
+	left_encoder_ticks = boost::circular_buffer<int>(encoder_circular_buffer_size);
+	right_encoder_ticks = boost::circular_buffer<int>(encoder_circular_buffer_size);
+	//	Initialize buffers
+	for (int i = 0; i < encoder_circular_buffer_size; i++)
+	{
+		left_encoder_ticks.push_back(0);
+		right_encoder_ticks.push_back(0);
+	}
+	
+	
 }
 
 void Hilde::twistCallback(const geometry_msgs::TwistStamped::ConstPtr& msg){
@@ -87,9 +113,29 @@ void Hilde::twistCallback(const geometry_msgs::TwistStamped::ConstPtr& msg){
 }
 
 void Hilde::serialCallback(const fmMsgs::serial_bin::ConstPtr& msg){
-	int left_vel = msg->data[1];
-	int right_vel = msg->data[2];
-	ROS_INFO("Left/right: %d, %d", left_vel, right_vel);
+	
+	// Adding new values to the circular buffers
+	left_encoder_ticks.push_back((int)msg->data[1]);
+	right_encoder_ticks.push_back((int)msg->data[2]);
+	
+	// Sum up ticks
+	int suml = 0, sumr = 0;
+	for (int i = 0; i < encoder_circular_buffer_size; i++) {
+		suml += left_encoder_ticks[i];
+		sumr += right_encoder_ticks[i];
+	}
+	
+	// Average ticks per encoder_dt
+	double aticksl = (double)suml / (encoder_circular_buffer_size);
+	double aticksr = (double)sumr / (encoder_circular_buffer_size);
+	
+	
+	// Calculating actual velocity, m/s
+	double avell = ((aticksl / 512) * (wheel_radius * 2 * M_PI)) / encoder_dt;
+	double avelr = ((aticksr / 512) * (wheel_radius * 2 * M_PI)) / encoder_dt;
+		 
+	
+	ROS_INFO("Left/right: %f, %f", avell, avelr);
 }
 
 double Hilde::check_velocity(double vel){

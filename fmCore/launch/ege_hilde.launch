@@ -1,39 +1,42 @@
+<?xml version="1.0"?>
 <launch>
-  <group ns="kbhit">
-    <node pkg="fmHMI" name="kbhit_node" type="kbhit_move" output="screen">
-	<param name="topic" value="kbhit_topic" />
-	<param name="twist_topic" value="/cmd_vel" />
-	<param name="max_speed" value="255" />
-	<param name="min_speed" value="0" />
-	<param name="turn_constant" value="3" />
-	<param name="ramp" value="20" />
-    </node>
-  </group>
-  <group ns="Hilde">
-    <node pkg="fmPSP" type="hilde_ctrl_node" name="hilde_controller" output="screen">
-	<param name="twist_subscriber_topic" value="/cmd_vel" type="string"/>
-	<param name="serial_subscriber_topic" value="slip_rx_topic" type="string"/>
-	<param name="serial_publisher_topic" value="slip_tx_topic" type="string"/>
-	<param name="max_velocity" value="0.75" type="double"/>
-	<!--<param name="max_linear_velocity" value="1.0" type="double"/>
+	<group ns="kbhit">
+		<node pkg="fmHMI" name="kbhit_node" type="kbhit_move" output="screen">
+			<param name="topic" value="kbhit_topic"/>
+			<param name="twist_topic" value="/cmd_vel"/>
+			<param name="max_speed" value="255"/>
+			<param name="min_speed" value="0"/>
+			<param name="turn_constant" value="3"/>
+			<param name="ramp" value="20"/>
+		</node>
+	</group>
+	<group ns="Hilde">
+		<node pkg="fmPSP" type="hilde_ctrl_node" name="hilde_controller" output="screen">
+			<param name="twist_subscriber_topic" value="/cmd_vel" type="string"/>
+			<param name="serial_subscriber_topic" value="slip_rx_topic" type="string"/>
+			<param name="serial_publisher_topic" value="slip_tx_topic" type="string"/>
+			<param name="max_velocity" value="0.75" type="double"/>
+			<param name="encoder_circular_buffer_size" value="10" type="int"/>
+			<param name="encoder_dt" value="0.02" type="double"/>
+			<!--<param name="max_linear_velocity" value="1.0" type="double"/>
 	<param name="bias_linear_velocity" value="1.0" type="double"/>
 	<param name="bias_linear_velocity_percentage" value="0.8" type="double"/>	
 	<param name="base_link_radius_to_wheels" value="0.185" type="double"/>
 	<param name="base_link_length_to_rear_wheel" value="0.28" type="double"/>
 -->
-    </node>
-    <node pkg="fmBSP" name="slip_node" type="slip_node">
-	<param name="unwrapped_topic" value="slip_rx_topic" />
-	<param name="wrap_topic" value="slip_tx_topic" />
-	<param name="transmit_topic" value="serial_rx_topic" />
-	<param name="receive_topic" value="serial_tx_topic" />
-    </node>
-    <node pkg="fmBSP" name="serial_node" type="serial_bytes_node" output="screen">
-	<param name="pub_topic" value="serial_rx_topic" />
-	<param name="sub_topic" value="serial_tx_topic" />
-	<param name="device" value="/dev/ttyUSB0" />
-	<param name="baudrate" value="38400" />
-	<param name="bytes" value="7" />
-    </node>
-  </group>
+		</node>
+		<node pkg="fmBSP" name="slip_node" type="slip_node">
+			<param name="unwrapped_topic" value="slip_rx_topic"/>
+			<param name="wrap_topic" value="slip_tx_topic"/>
+			<param name="transmit_topic" value="serial_rx_topic"/>
+			<param name="receive_topic" value="serial_tx_topic"/>
+		</node>
+		<node pkg="fmBSP" name="serial_node" type="serial_bytes_node" output="screen">
+			<param name="pub_topic" value="serial_rx_topic"/>
+			<param name="sub_topic" value="serial_tx_topic"/>
+			<param name="device" value="/dev/ttyUSB0"/>
+			<param name="baudrate" value="38400"/>
+			<param name="bytes" value="7"/>
+		</node>
+	</group>
 </launch>
