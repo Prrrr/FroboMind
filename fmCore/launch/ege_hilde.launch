@@ -1,7 +1,27 @@
 <?xml version="1.0"?>
 <launch>
+	<group ns="lrs">
+		<node pkg="fmSensors" name="lms111_front" type="lms111_node">
+			<param name="host" value="192.168.0.11" />	
+			<param name="topic_id" value="laser_msgs_1" />	 
+		</node>
+	</group>
+	<group ns="IMU">
+		<node pkg="fmSensors" name="IMU" type="sparkfun_razor_node" output="screen">
+			<param name="sub_serial_string_topic_id" value="imu_raw_input"/>
+			<param name="pub_accelerometer_topic_id" value="/fmSensors/Accelerometer"/>
+			<param name="pub_gyroscope_topic_id" value="/fmSensors/Gyroscope"/>
+			<param name="pub_magnetometer_topic_id" value="/fmSensors/Magnetometer"/>
+		</node>
+		<node pkg="fmBSP" name="IMU_COM" type="serial_node" output="screen">
+			<param name="publisher_topic" value="imu_raw_input"/>
+			<param name="subscriber_topic" value="imu_commands"/>
+			<param name="device" value="/dev/ttyUSB1"/>
+			<param name="baudrate" value="57600"/>
+		</node>
+	</group>
 	<group ns="kbhit">
-		<node pkg="fmHMI" name="kbhit_node" type="kbhit_move" output="screen">
+		<node pkg="fmHMI" name="kbhit_node" type="kbhit_move">
 			<param name="topic" value="kbhit_topic"/>
 			<param name="twist_topic" value="/cmd_vel"/>
 			<param name="max_speed" value="255"/>
@@ -18,6 +38,7 @@
 			<param name="max_velocity" value="0.75" type="double"/>
 			<param name="encoder_circular_buffer_size" value="10" type="int"/>
 			<param name="encoder_dt" value="0.02" type="double"/>
+			<param name="base_link_length_to_rear_wheel" value="0.28" type="double"/>
 			<!--<param name="max_linear_velocity" value="1.0" type="double"/>
 	<param name="bias_linear_velocity" value="1.0" type="double"/>
 	<param name="bias_linear_velocity_percentage" value="0.8" type="double"/>	
@@ -31,7 +52,7 @@
 			<param name="transmit_topic" value="serial_rx_topic"/>
 			<param name="receive_topic" value="serial_tx_topic"/>
 		</node>
-		<node pkg="fmBSP" name="serial_node" type="serial_bytes_node" output="screen">
+		<node pkg="fmBSP" name="serial_node" type="serial_bytes_node">
 			<param name="pub_topic" value="serial_rx_topic"/>
 			<param name="sub_topic" value="serial_tx_topic"/>
 			<param name="device" value="/dev/ttyUSB0"/>

@@ -17,12 +17,15 @@ private:
 	//  Node handling
 	ros::NodeHandle global_n;
 	ros::NodeHandle local_n;
+	
 	// Subscribers and publishers
 	ros::Subscriber twist_subscriber;
 	ros::Subscriber robocard_subscriber;
 	ros::Publisher robocard_publisher;
+	
 	// ros msgs
 	fmMsgs::serial_bin robocard_tx_msg;
+	
 	// Parameters
 	string twist_subscriber_topic;
 	string robocard_subscriber_topic;
@@ -32,6 +35,7 @@ private:
 	double icr_radius_to_wheels;
 	int encoder_circular_buffer_size;
 	double encoder_dt; // How often new ticks are received from the robocard
+	double base_link_length_to_rear_wheel;
 	
 	// Callback Functions
 	void twistCallback(const geometry_msgs::TwistStamped::ConstPtr& msg);
@@ -87,6 +91,8 @@ Hilde::Hilde() {
 	local_n.param<double>("max_velocity", max_velocity, 0.75);
 	local_n.param<int>("encoder_circular_buffer_size", encoder_circular_buffer_size, 10);
 	local_n.param<double>("encoder_dt", encoder_dt, 0.02);
+	local_n.param("base_link_length_to_rear_wheel", base_link_length_to_rear_wheel, 0.28);
+	
 	// Subscribers and publisher
 	twist_subscriber = global_n.subscribe<geometry_msgs::TwistStamped>(twist_subscriber_topic.c_str(), 100, &Hilde::twistCallback,this);
 	robocard_subscriber = global_n.subscribe<fmMsgs::serial_bin>(robocard_subscriber_topic.c_str(), 100, &Hilde::serialCallback, this);
@@ -129,13 +135,14 @@ void Hilde::serialCallback(const fmMsgs::serial_bin::ConstPtr& msg){
 	double aticksl = (double)suml / (encoder_circular_buffer_size);
 	double aticksr = (double)sumr / (encoder_circular_buffer_size);
 	
+	//ROS_INFO("Average ticks left: %f Right: %f", aticksl, aticksr);
 	
 	// Calculating actual velocity, m/s
 	double avell = ((aticksl / 512) * (wheel_radius * 2 * M_PI)) / encoder_dt;
 	double avelr = ((aticksr / 512) * (wheel_radius * 2 * M_PI)) / encoder_dt;
 		 
 	
-	ROS_INFO("Left/right: %f, %f", avell, avelr);
+	//ROS_INFO("Left/right: %f, %f", avell, avelr);
 }
 
 double Hilde::check_velocity(double vel){
@@ -147,13 +154,13 @@ double Hilde::check_velocity(double vel){
 }
 void Hilde::calculateMotorFromTwist(double linear_vel, double angular_vel){
 	double V, w;
-	int output_left, output_right;
+	int output_left, output_right, out_rear;
 	double left_velocity, right_velocity;
 	double r = wheel_radius;
 	double b = icr_radius_to_wheels;
 	// transform linear vector (0 - 1) relative to max_speed and set omega (w)
 	V = max_velocity * linear_vel;
-	w = angular_vel;
+	w = -angular_vel;
 	// Calculate individual wheel velocities
 	// See the latex document for clarification
 	left_velocity = V/r - b/(2*r)*w;
@@ -168,7 +175,19 @@ void Hilde::calculateMotorFromTwist(double linear_vel, double angular_vel){
 	double temp_output_right = right_velocity / max_velocity * 127;
 	output_left = (int) temp_output_left;
 	output_right = (int) temp_output_right;
-	ROS_INFO("V: %f out: %f out_char %d", V, temp_output_left, output_left);
+	
+	
+	
+	double temp_rear_wheel_angle = (atan2(w * base_link_length_to_rear_wheel, V) * 180) / M_PI;
+	
+	ROS_INFO("Rear wheel calc: w: %f, bs: %f, V: %f, Rear angle: %f", w, base_link_length_to_rear_wheel, V, temp_rear_wheel_angle);
+	
+	out_rear = (int)(128 - temp_rear_wheel_angle);
+	
+	ROS_INFO("V: %f out: %f out_char %d, Rear wheel angle: %f, rear output: %i", V, temp_output_left, output_left, temp_rear_wheel_angle, out_rear);
+	
+	
+	
 	// Create protocol
 	protocol prot;
 	prot.length = 2;

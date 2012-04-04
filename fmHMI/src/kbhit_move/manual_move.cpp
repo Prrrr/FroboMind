@@ -139,15 +139,19 @@ void Kbhit::twist_robot(double d_lin, double d_ang){
 		//twist_angular = d_ang;
 	}else
 		twist_angular = 0;
+	
 	//Check values
 	twist_check(twist_linear, twist_angular);
+	
 	// Convert from degrees to radians
-	twist_angular = twist_angular * M_PI / 180;
-	//ROS_INFO("TWIST: %f, %f", twist_linear, twist_angular);
+	double twist_out = twist_angular * M_PI / 180;
+	
+	//ROS_INFO("TWIST: %f, %f, %f, Twist out: %f", twist_linear, twist_angular, M_PI, twist_out);
+	
 	// Publish message
 	twist_msg.header.stamp = ros::Time::now();
 	twist_msg.twist.linear.x = twist_linear;
-	twist_msg.twist.angular.z = twist_angular;
+	twist_msg.twist.angular.z = twist_out;
 	twist_pub.publish(twist_msg);
 }
 

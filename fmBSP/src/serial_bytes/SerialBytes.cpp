@@ -27,11 +27,12 @@ SerialBytes::SerialBytes() : serial_(io_){
 	n.param<int>("bytes", bytes, 7);
 	// Resize the buffer to make it work with boost::buffer
 	buffer.resize(bytes);
-	// Open device
-	openDevice(dev, baudrate);
 	// Publishers / Subscribers
 	serial_sub = nh.subscribe<fmMsgs::serial_bin>(sub_topic.c_str(), 1000, &SerialBytes::writeHandler, this);
 	serial_pub = nh.advertise<fmMsgs::serial_bin>(pub_topic.c_str(), 1000);
+	
+	// Open device
+	openDevice(dev, baudrate);
 }
 
 
