@@ -21,9 +21,11 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #uncomment if you have defined services
 #rosbuild_gensrv()
 
+# Pot detector node
+rosbuild_add_executable(pot_detector src/lidar_feature_extractors/pot_detector_opencv/PotDetector.cpp)
 
-rosbuild_add_executable(lidar_row_detector src/lidar_feature_extractors/lidar_row_detect_opencv/maize_detection_node.cpp)
-rosbuild_add_executable(lidar_row_detector src/lidar_feature_extractors/lidar_row_detect_opencv/maize_detection.cpp)
+#rosbuild_add_executable(lidar_row_detector src/lidar_feature_extractors/lidar_row_detect_opencv/maize_detection_node.cpp)
+#rosbuild_add_executable(lidar_row_detector src/lidar_feature_extractors/lidar_row_detect_opencv/maize_detection.cpp)
 
 rosbuild_add_executable(gps_state src/global_pose_extractors/gps_state_node.cpp)
 
