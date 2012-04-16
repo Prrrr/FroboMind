@@ -10,6 +10,8 @@
 #include "geometry_msgs/TwistStamped.h"
 #include "fmMsgs/serial_bin.h"
 #include "boost/circular_buffer.hpp"
+#include <tf/transform_broadcaster.h>
+#include <nav_msgs/Odometry.h>
 	 
 using namespace std;
 class Hilde {
@@ -36,6 +38,8 @@ private:
 	int encoder_circular_buffer_size;
 	double encoder_dt; // How often new ticks are received from the robocard
 	double base_link_length_to_rear_wheel;
+	double base_link_radius_to_wheels; // Distance from center of robot to the wheel
+	double dead_reckoning_linearization_turn_rate_threshold;
 	
 	// Callback Functions
 	void twistCallback(const geometry_msgs::TwistStamped::ConstPtr& msg);
@@ -43,6 +47,7 @@ private:
 	// Functions
 	void calculateMotorFromTwist(double linear_vel, double angular_vel);
 	double check_velocity(double vel);
+	void publish_odom(double lv, double rv);
 	
 
 	// Circular buffers for the encoders
@@ -91,7 +96,9 @@ Hilde::Hilde() {
 	local_n.param<double>("max_velocity", max_velocity, 0.75);
 	local_n.param<int>("encoder_circular_buffer_size", encoder_circular_buffer_size, 10);
 	local_n.param<double>("encoder_dt", encoder_dt, 0.02);
-	local_n.param("base_link_length_to_rear_wheel", base_link_length_to_rear_wheel, 0.28);
+	local_n.param<double>("base_link_length_to_rear_wheel", base_link_length_to_rear_wheel, 0.28);
+	local_n.param<double>("base_link_radius_to_wheels", base_link_radius_to_wheels, 0.02);
+	local_n.param<double>("dead_reckoning_linearization_turn_rate_threshold", dead_reckoning_linearization_turn_rate_threshold, 0.01);
 	
 	// Subscribers and publisher
 	twist_subscriber = global_n.subscribe<geometry_msgs::TwistStamped>(twist_subscriber_topic.c_str(), 100, &Hilde::twistCallback,this);
@@ -140,9 +147,51 @@ void Hilde::serialCallback(const fmMsgs::serial_bin::ConstPtr& msg){
 	// Calculating actual velocity, m/s
 	double avell = ((aticksl / 512) * (wheel_radius * 2 * M_PI)) / encoder_dt;
 	double avelr = ((aticksr / 512) * (wheel_radius * 2 * M_PI)) / encoder_dt;
-		 
+	
+	// Calculate odometry
+	publish_odom(avell, avelr);
 	
 	//ROS_INFO("Left/right: %f, %f", avell, avelr);
+}
+
+// Published odometry-message
+// Takes the velocity of the left and right wheel as parameters
+void Hilde::publish_odom(double lv, double rv) {
+	static double x = 0.0, y = 0.0, th = 0.0;
+	static ros::Time last_time = ros::Time::now();
+	static double b =  (2 * base_link_radius_to_wheels); // Length between the wheels
+	
+	// Start calculations
+	ros::Time current_time = ros::Time::now();
+	//double dt = (current_time - last_time).toSec();
+
+	double dt = 0.02;
+	
+	double forward_speed = (lv + rv) / 2.0; // Forward speed in m/s
+	//double turn_rate = (lv + rv) / b; // Rad/s
+	double w = (rv - lv) / b;
+	double beta = w * dt;
+	double distance_travelled = forward_speed * dt; // in m.
+	
+	if(abs(beta) > dead_reckoning_linearization_turn_rate_threshold)
+	{
+		// turn_rate above treshold
+		double turn_radius = distance_travelled / beta;
+		double cx = (x - sin(th) * turn_radius);
+		double cy = (y + cos(th) * turn_radius);
+		x 	= cx + sin(th + beta) * turn_radius;
+		y 	= cy - cos(th + beta) * turn_radius;
+	} else {
+		// turn_rate below threshold
+		x 	= x + distance_travelled * cos(th);
+		y 	= y + distance_travelled * sin(th);
+	}
+	
+	th	= fmod(abs((th + beta)), (2.0 * M_PI));
+		
+	last_time = current_time;
+	
+	ROS_INFO("%f %f %f %f %f", lv, rv, x, y, th);
 }
 
 double Hilde::check_velocity(double vel){
@@ -152,6 +201,7 @@ double Hilde::check_velocity(double vel){
 	}
 	return return_value;
 }
+
 void Hilde::calculateMotorFromTwist(double linear_vel, double angular_vel){
 	double V, w;
 	int output_left, output_right, out_rear;
@@ -180,11 +230,11 @@ void Hilde::calculateMotorFromTwist(double linear_vel, double angular_vel){
 	
 	double temp_rear_wheel_angle = (atan2(w * base_link_length_to_rear_wheel, V) * 180) / M_PI;
 	
-	ROS_INFO("Rear wheel calc: w: %f, bs: %f, V: %f, Rear angle: %f", w, base_link_length_to_rear_wheel, V, temp_rear_wheel_angle);
+	//ROS_INFO("Rear wheel calc: w: %f, bs: %f, V: %f, Rear angle: %f", w, base_link_length_to_rear_wheel, V, temp_rear_wheel_angle);
 	
 	out_rear = (int)(128 - temp_rear_wheel_angle);
 	
-	ROS_INFO("V: %f out: %f out_char %d, Rear wheel angle: %f, rear output: %i", V, temp_output_left, output_left, temp_rear_wheel_angle, out_rear);
+	//ROS_INFO("V: %f out: %f out_char %d, Rear wheel angle: %f, rear output: %i", V, temp_output_left, output_left, temp_rear_wheel_angle, out_rear);
 	
 	
 	

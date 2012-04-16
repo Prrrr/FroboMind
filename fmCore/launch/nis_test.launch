@@ -26,12 +26,12 @@
 			<param name="pub_gyroscope_topic_id" value="/fmSensors/Gyroscope"/>
 			<param name="pub_magnetometer_topic_id" value="/fmSensors/Magnetometer"/>
 		</node>
-		<node pkg="fmBSP" name="IMU_COM" type="serial_node" output="screen">
+		<!-- <node pkg="fmBSP" name="IMU_COM" type="serial_node" output="screen">
 			<param name="publisher_topic" value="imu_raw_input"/>
 			<param name="subscriber_topic" value="imu_commands"/>
 			<param name="device" value="/dev/ttyUSB0"/>
 			<param name="baudrate" value="57600"/>
-		</node>
+		</node> -->
 		<node pkg="fmExtractors" name="raw_mag_heading_node" type="raw_mag_heading_node.py" output="screen">
 			<param name="dt" value="0.1"/>
 			<param name="sub_magnetometer_topic_id" value="/fmSensors/Magnetometer"/>

@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <launch>
-	<group ns="lrs">
+	<!-- <group ns="lrs">
 		<node pkg="fmSensors" name="lms111_front" type="lms111_node">
-			<param name="host" value="192.168.0.11" />	
-			<param name="topic_id" value="laser_msgs_1" />	 
+			<param name="host" value="192.168.0.11"/>
+			<param name="topic_id" value="laser_msgs_1"/>
 		</node>
-	</group>
+	</group> -->
 	<group ns="IMU">
 		<node pkg="fmSensors" name="IMU" type="sparkfun_razor_node" output="screen">
 			<param name="sub_serial_string_topic_id" value="imu_raw_input"/>
@@ -13,14 +13,14 @@
 			<param name="pub_gyroscope_topic_id" value="/fmSensors/Gyroscope"/>
 			<param name="pub_magnetometer_topic_id" value="/fmSensors/Magnetometer"/>
 		</node>
-		<node pkg="fmBSP" name="IMU_COM" type="serial_node" output="screen">
+		<!-- <node pkg="fmBSP" name="IMU_COM" type="serial_node" output="screen">
 			<param name="publisher_topic" value="imu_raw_input"/>
 			<param name="subscriber_topic" value="imu_commands"/>
 			<param name="device" value="/dev/ttyUSB1"/>
 			<param name="baudrate" value="57600"/>
-		</node>
+		</node> -->
 	</group>
-	<group ns="kbhit">
+	<!-- <group ns="kbhit">
 		<node pkg="fmHMI" name="kbhit_node" type="kbhit_move">
 			<param name="topic" value="kbhit_topic"/>
 			<param name="twist_topic" value="/cmd_vel"/>
@@ -29,7 +29,7 @@
 			<param name="turn_constant" value="3"/>
 			<param name="ramp" value="20"/>
 		</node>
-	</group>
+	</group> -->
 	<group ns="Hilde">
 		<node pkg="fmPSP" type="hilde_ctrl_node" name="hilde_controller" output="screen">
 			<param name="twist_subscriber_topic" value="/cmd_vel" type="string"/>
@@ -39,6 +39,8 @@
 			<param name="encoder_circular_buffer_size" value="10" type="int"/>
 			<param name="encoder_dt" value="0.02" type="double"/>
 			<param name="base_link_length_to_rear_wheel" value="0.28" type="double"/>
+			<param name="base_link_radius_to_wheels" value="0.185" type="double"/>
+			<param name="dead_reckoning_linearization_turn_rate_threshold" value="0.0001" type="double"/>
 			<!--<param name="max_linear_velocity" value="1.0" type="double"/>
 	<param name="bias_linear_velocity" value="1.0" type="double"/>
 	<param name="bias_linear_velocity_percentage" value="0.8" type="double"/>	
@@ -46,7 +48,7 @@
 	<param name="base_link_length_to_rear_wheel" value="0.28" type="double"/>
 -->
 		</node>
-		<node pkg="fmBSP" name="slip_node" type="slip_node">
+		<!-- <node pkg="fmBSP" name="slip_node" type="slip_node">
 			<param name="unwrapped_topic" value="slip_rx_topic"/>
 			<param name="wrap_topic" value="slip_tx_topic"/>
 			<param name="transmit_topic" value="serial_rx_topic"/>
@@ -58,6 +60,6 @@
 			<param name="device" value="/dev/ttyUSB0"/>
 			<param name="baudrate" value="38400"/>
 			<param name="bytes" value="7"/>
-		</node>
+		</node> -->
 	</group>
 </launch>

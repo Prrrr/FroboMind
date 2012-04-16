@@ -1,5 +1,10 @@
 <launch>
-  <group ns="encoder_left">
+	<group ns="fmExtractors">
+		    <node pkg="fmExtractors" type="lidar_row_detector" name="lidar_row_detector" output="screen"/> 
+			<param name="subscriber_topic" value="/lrs/laser_msgs_1" />
+	</group>
+	
+  <!-- <group ns="encoder_left">
     <node pkg="fmBSP" name="serial_node" type="serial_bytes_node" output="screen">
 	<param name="pub_topic" value="S0_rx_topic" />
 	<param name="sub_topic" value="S0_tx_topic" />
@@ -12,8 +17,8 @@
 	<param name="encoder_sub_topic" value="S0_rx_topic" />
 	<param name="time" value="0.1" />	
     </node>
-  </group>
-  <group ns="kbhit">
+  </group> -->
+  <!-- <group ns="kbhit">
     <node pkg="fmHMI" name="kbhit_node" type="kbhit_move" output="screen">
 	<param name="topic" value="kbhit_topic" />
 	<param name="twist_topic" value="/robocard/twist_topic" />
@@ -22,8 +27,8 @@
 	<param name="turn_constant" value="3" />
 	<param name="ramp" value="20" />
     </node>
-  </group>
-  <group ns="robocard">
+  </group> -->
+  <!-- <group ns="robocard">
     <node pkg="fmPSP" name="ctrl_node" type="prrr_ctrl_node" output="screen">
 	<param name="twist_topic" value="twist_topic" />
 	<param name="sub_topic" value="ctrl_sub_topic" />
@@ -49,5 +54,5 @@
 	<param name="bytes" value="7" />
     </node>
 
-  </group>
+  </group> -->
 </launch>
