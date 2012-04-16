@@ -174,16 +174,27 @@ void PotDetector::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr& lase
 	/////////////////// end of final calculation /////////////////////////
 
 	// Do something with the angles and distances
-	if (lmeancount && rmeancount){
-		ROS_INFO("distance left: %f, right %f", ldist, rdist);
-		ROS_INFO("angle left: %f, right %f", lang, rang);
-	}else if (lmeancount){
+	row.header.stamp = ros::Time::now();
+	++row.header.seq;
+	row.rightvalid = 0;
+	row.leftvalid = 0;
+	
+	if (lmeancount){
 		ROS_INFO("Only left! dist: %f, ang %f", ldist, lang);
-	}else if(rmeancount){
+		row.leftvalid = 1;
+		row.leftdistance = ldist;
+		row.leftangle = lang;
+	}
+	
+	if(rmeancount){
 		ROS_INFO("Only right! dist: %f, ang %f", rdist, rang);
+		row.rightvalid = 1;
+		row.rightdistance = rdist;
+		row.rightangle = rang;
 	}
 
-
+	row_pub.publish(row);
+	
 	// Draw vertical line
 	CvPoint p_vertical_a, p_vertical_b;
 	p_vertical_a.x = 300, p_vertical_a.y = 0;
@@ -255,13 +266,14 @@ int main(int argc, char** argv){
 	// Instatiate object
 	PotDetector pd;
 	// Ros params
-	string laser_scan_topic;
+	string laser_scan_topic, row_topic;
 	nh.param<string>("laser_scan_topic", laser_scan_topic, "laser_scan_topic");
+	nh.param<string>("row_topic", row_topic, "row_topic");
 	nh.param<double>("max_dist_to_rows", pd.max_dist_to_rows, 0.6);
 	nh.param<int>("show_image", pd.show_image_boolean, 1);
 	// Subscribes and publishers
 	ros::Subscriber laser_subscriber = n.subscribe<sensor_msgs::LaserScan>(laser_scan_topic.c_str(), 10, &PotDetector::laserScanCallback, &pd);
-
+	pd.row_pub = n.advertise<fmMsgs::row>(row_topic.c_str(), 10);
 	// Start a thread for windows if it is TRUE
 	if (pd.show_image_boolean){
 		// Create a window

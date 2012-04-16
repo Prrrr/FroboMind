@@ -10,6 +10,7 @@
 #include "ros/ros.h"
 #include "sensor_msgs/LaserScan.h"
 #include "sensor_msgs/PointCloud.h"
+#include "fmMsgs/row.h"
 #include "laser_geometry/laser_geometry.h"
 // OpenCv includes
 #include <cv_bridge/cv_bridge.h>
@@ -38,6 +39,9 @@ public:
 	int show_image_boolean;
 	//Callbacks
 	void laserScanCallback(const sensor_msgs::LaserScan::ConstPtr& scan);
+	
+	ros::Publisher row_pub;
+	fmMsgs::row row;
 };
 
 #endif /* POTDETECTOR_H_ */

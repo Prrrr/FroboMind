@@ -2,6 +2,7 @@
   <group ns="lrs">
     <node pkg="fmExtractors" name="pot_detector_node" type="pot_detector" output="screen">
 	<param name="laser_scan_topic" value="laser_msgs_1" />
+	<param name="row_topic" value="row_topic" />
 	<param name="max_dist_to_rows" value="0.6" />
 	<param name="show_image" value="1" />
     </node>
