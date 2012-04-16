@@ -23,6 +23,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 #rosbuild_add_executable(BS src/behaviour_selectors/in_row_nav_sm/behaviour_selector_node.cpp)
 #rosbuild_add_executable(BS src/behaviour_selectors/in_row_nav_sm/behaviour_selector.cpp)
+rosbuild_add_executable(pot_decision src/pot_decision_maker/PotDecision.cpp)
 
 #common commands for building c++ executables and libraries
 #rosbuild_add_library(${PROJECT_NAME} src/example.cpp)

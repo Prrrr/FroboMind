@@ -9,6 +9,7 @@
 #include "math.h"
 #include "geometry_msgs/TwistStamped.h"
 #include "fmMsgs/serial_bin.h"
+#include "fmMsgs/float_data.h"
 #include "boost/circular_buffer.hpp"
 #include <tf/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
@@ -24,14 +25,17 @@ private:
 	ros::Subscriber twist_subscriber;
 	ros::Subscriber robocard_subscriber;
 	ros::Publisher robocard_publisher;
+	ros::Publisher wheelspeed_publisher;
 	
 	// ros msgs
 	fmMsgs::serial_bin robocard_tx_msg;
+	fmMsgs::float_data wheel_speeds_msg;
 	
 	// Parameters
 	string twist_subscriber_topic;
 	string robocard_subscriber_topic;
 	string robocard_publisher_topic;
+	string wheel_speed_topic;
 	double wheel_radius;
 	double max_velocity;
 	double icr_radius_to_wheels;
@@ -91,6 +95,7 @@ Hilde::Hilde() {
 	local_n.param<std::string>("twist_subscriber_topic", twist_subscriber_topic, "/cmd_vel");
 	local_n.param<std::string>("serial_subscriber_topic", robocard_subscriber_topic, "S0_rx_topic");
 	local_n.param<std::string>("serial_publisher_topic", robocard_publisher_topic, "S0_tx_topic");
+	local_n.param<std::string>("wheel_speed_topic", wheel_speed_topic, "wheel_speed_topic");
 	local_n.param<double>("wheel_radius", wheel_radius, 0.085);
 	local_n.param<double>("icr_radius_to_wheels", icr_radius_to_wheels, 0.185);
 	local_n.param<double>("max_velocity", max_velocity, 0.75);
@@ -104,6 +109,7 @@ Hilde::Hilde() {
 	twist_subscriber = global_n.subscribe<geometry_msgs::TwistStamped>(twist_subscriber_topic.c_str(), 100, &Hilde::twistCallback,this);
 	robocard_subscriber = global_n.subscribe<fmMsgs::serial_bin>(robocard_subscriber_topic.c_str(), 100, &Hilde::serialCallback, this);
 	robocard_publisher = global_n.advertise<fmMsgs::serial_bin>(robocard_publisher_topic.c_str(), 1000);
+	wheelspeed_publisher = global_n.advertise<fmMsgs::float_data>(wheel_speed_topic.c_str(), 1000);
 	
 	// Instantiate circular buffers for the encoders
 	left_encoder_ticks = boost::circular_buffer<int>(encoder_circular_buffer_size);
@@ -149,7 +155,16 @@ void Hilde::serialCallback(const fmMsgs::serial_bin::ConstPtr& msg){
 	double avelr = ((aticksr / 512) * (wheel_radius * 2 * M_PI)) / encoder_dt;
 	
 	// Calculate odometry
-	publish_odom(avell, avelr);
+	//publish_odom(avell, avelr);
+	
+	wheel_speeds_msg.header.stamp = ros::Time::now();
+	++wheel_speeds_msg.header.seq;
+	wheel_speeds_msg.size = 2;
+	wheel_speeds_msg.data.clear();
+	wheel_speeds_msg.data.push_back(avelr);
+	wheel_speeds_msg.data.push_back(avell);
+	
+	wheelspeed_publisher.publish(wheel_speeds_msg);
 	
 	//ROS_INFO("Left/right: %f, %f", avell, avelr);
 }

@@ -10,6 +10,7 @@
   <url>http://ros.org/wiki/fmDecisionMaking</url>
   <depend package="roscpp"/>
   <depend package="joy"/>
+  <depend package="fmMsgs"/>
 </package>
 
 
