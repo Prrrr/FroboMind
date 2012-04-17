@@ -25,6 +25,9 @@ private:
 	double rightdistance, rightangle;
 	double leftdistance, leftangle;
 	
+	// Navigation data
+	double cross_track_error;
+	
 public:
 	PotDecision();
 	virtual ~PotDecision();
@@ -35,6 +38,7 @@ public:
 	void gyroCallback(const fmMsgs::gyroscope::ConstPtr& gyro);
 	void timerCallback(const ros::TimerEvent& event);
 	void calculate_odometry();
+	void calculate_twist();
 };
 
 #endif /* POTDECISION_H_ */

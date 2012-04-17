@@ -55,7 +55,15 @@ void PotDecision::timerCallback(const ros::TimerEvent& event) {
 		new_speeds = 0;
 		new_gyro = 0;
 	}
+	
+	
 }
+
+void PotDecision::calculate_twist() {
+	//ROS_INFO("Timerz!");
+	
+}
+
 
 void PotDecision::calculate_odometry() {
 	static double x = 0.0, y = 0.0, th = 0.0;
@@ -102,22 +110,34 @@ void PotDecision::calculate_odometry() {
 	th	= fmod((th + beta), (2.0 * M_PI));
 	
 	double th_row = 0;
+	cross_track_error = 0;
+	double dist_cte = 0, ang_cte = 0;
 	if(new_l_row && new_r_row)
 	{
 		th_row = (rightangle + leftangle) / 2;
 		th = th * 0.5 + th_row * 0.5;
+		dist_cte = rightdistance - leftdistance;
 	} else if(new_l_row)
 	{
 		th_row = leftangle;
 		th = th * 0.5 + th_row * 0.5;
+		
+		//cross_track_error = (leftdistance - 0.35) + (leftangle);
+		dist_cte = leftdistance - 0.35;
 	} else if(new_r_row){
 		th_row = rightangle;
 		th = th * 0.5 + th_row * 0.5;
+		
+		//cross_track_error = (rightdistance - 0.35) + (rightangle);
+		dist_cte = rightdistance - 0.35;
 	}
+
+	ang_cte = th_row;
 	
-	//last_time = current_time;
+	cross_track_error = dist_cte + ang_cte;
+	ROS_INFO("CTE: %f", cross_track_error);
 	
-	ROS_INFO("\t%f\t%f\t%f\t%f\t%f\t%f", x, y, th, idt, wticks, wgyro);
+	//ROS_INFO("\t%f\t%f\t%f\t%f\t%f\t%f", x, y, th, idt, wticks, wgyro);
 
 	idt += dt;
 
