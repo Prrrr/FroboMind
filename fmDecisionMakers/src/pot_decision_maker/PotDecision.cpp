@@ -68,8 +68,7 @@ void PotDecision::calculate_twist() {
 void PotDecision::calculate_odometry() {
 	static double x = 0.0, y = 0.0, th = 0.0;
 	//static ros::Time last_time = ros::Time::now();
-	//static double b =  (2 * base_link_radius_to_wheels); // Length between the wheels
-	static double b =  (2 * 0.185); // Length between the wheels
+	static double b =  (2 * base_link_radius_to_wheels); // Length between the wheels
 	static double gyro_first_value = 1000;
 	static double idt = 0;
 	static double dt = 0.02;
@@ -117,35 +116,34 @@ void PotDecision::calculate_odometry() {
 		th_row = (rightangle + leftangle) / 2;
 		th = th * 0.5 + th_row * 0.5;
 		dist_cte = rightdistance - leftdistance;
-	} else if(new_l_row)
-	{
+	} else if(new_l_row){
 		th_row = leftangle;
 		th = th * 0.5 + th_row * 0.5;
 		
 		//cross_track_error = (leftdistance - 0.35) + (leftangle);
-		dist_cte = leftdistance - 0.35;
+		dist_cte = leftdistance - mean_driving_distance_from_rows;
 	} else if(new_r_row){
 		th_row = rightangle;
 		th = th * 0.5 + th_row * 0.5;
 		
 		//cross_track_error = (rightdistance - 0.35) + (rightangle);
-		dist_cte = rightdistance - 0.35;
+		dist_cte = rightdistance - mean_driving_distance_from_rows;
 	}
-
 	ang_cte = th_row;
 	
-	cross_track_error = dist_cte + ang_cte;
-	if (cross_track_error != 0){
+	cross_track_error = dist_cte * cte_weight_distance + ang_cte * cte_weight_angle;
+	if (cross_track_error){		// If there is a cross track error, turn robot (publish message)
 		ROS_INFO("CTE: %f", cross_track_error);
 
 		//ROS_INFO("\t%f\t%f\t%f\t%f\t%f\t%f", x, y, th, idt, wticks, wgyro);
 		// Publish twist to ros
 		++twist_msg.header.seq;
 		twist_msg.header.stamp = ros::Time::now();
-		twist_msg.twist.linear.x = 0.5;
+		twist_msg.twist.linear.x = linear_mean_velocity;
 		twist_msg.twist.angular.z = cross_track_error;
 		twist_pub.publish(twist_msg);
 	}
+
 	
 	// Update time
 	idt += dt;
@@ -182,6 +180,13 @@ int main(int argc, char** argv){
 	nh.param<string>("gyro_topic", gyro_topic, "gyro_topic");
 	nh.param<string>("twist_topic", twist_topic, "/cmd_vel");
 	nh.param<double>("time_s", time_s, 0.1);
+	nh.param<double>("linear_mean_velocity", pd.linear_mean_velocity, 0.5);
+	nh.param<double>("mean_driving_distance_from_rows", pd.mean_driving_distance_from_rows, 0.35);
+	nh.param<double>("cte_weight_angle", pd.cte_weight_angle, 0.5);
+	nh.param<double>("cte_weight_distance", pd.cte_weight_distance, 0.5);
+	nh.param<double>("base_link_radius_to_wheels", pd.base_link_radius_to_wheels, 0.185);
+
+
 	//nh.param<double>("max_dist_to_rows", pd.max_dist_to_rows, 0.6);
 	//nh.param<int>("show_image", pd.show_image_boolean, 1);
 	

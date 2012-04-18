@@ -35,6 +35,11 @@ public:
 	PotDecision();
 	virtual ~PotDecision();
 	
+	// Parameters
+	double linear_mean_velocity, mean_driving_distance_from_rows;
+	double cte_weight_angle, cte_weight_distance;
+	double base_link_radius_to_wheels;
+
 	// Functions
 	void rowCallback(const fmMsgs::row::ConstPtr& row);
 	void wheelCallback(const fmMsgs::float_data::ConstPtr& speeds);
