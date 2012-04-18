@@ -11,6 +11,7 @@
 #include "fmMsgs/row.h"
 #include "fmMsgs/float_data.h"
 #include "fmMsgs/gyroscope.h"
+#include "geometry_msgs/TwistStamped.h"
 #include "math.h"
 using namespace std;
 class PotDecision {
@@ -28,6 +29,8 @@ private:
 	// Navigation data
 	double cross_track_error;
 	
+	// msgs
+	geometry_msgs::TwistStamped twist_msg;
 public:
 	PotDecision();
 	virtual ~PotDecision();
@@ -39,6 +42,9 @@ public:
 	void timerCallback(const ros::TimerEvent& event);
 	void calculate_odometry();
 	void calculate_twist();
+
+	// Publisher
+	ros::Publisher twist_pub;
 };
 
 #endif /* POTDECISION_H_ */

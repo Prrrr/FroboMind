@@ -135,10 +135,19 @@ void PotDecision::calculate_odometry() {
 	ang_cte = th_row;
 	
 	cross_track_error = dist_cte + ang_cte;
-	ROS_INFO("CTE: %f", cross_track_error);
-	
-	//ROS_INFO("\t%f\t%f\t%f\t%f\t%f\t%f", x, y, th, idt, wticks, wgyro);
+	if (cross_track_error != 0){
+		ROS_INFO("CTE: %f", cross_track_error);
 
+		//ROS_INFO("\t%f\t%f\t%f\t%f\t%f\t%f", x, y, th, idt, wticks, wgyro);
+		// Publish twist to ros
+		++twist_msg.header.seq;
+		twist_msg.header.stamp = ros::Time::now();
+		twist_msg.twist.linear.x = 0.5;
+		twist_msg.twist.angular.z = cross_track_error;
+		twist_pub.publish(twist_msg);
+	}
+	
+	// Update time
 	idt += dt;
 
 	// Values used.
@@ -165,12 +174,13 @@ int main(int argc, char** argv){
 	PotDecision pd;
 	
 	// Ros params
-	string wheel_topic, row_topic, gyro_topic;
+	string wheel_topic, row_topic, gyro_topic, twist_topic;
 	double time_s;
 	//nh.param<string>("laser_scan_topic", laser_scan_topic, "laser_scan_topic");
 	nh.param<string>("row_topic", row_topic, "row_topic");
 	nh.param<string>("wheel_topic", wheel_topic, "wheel_topic");
 	nh.param<string>("gyro_topic", gyro_topic, "gyro_topic");
+	nh.param<string>("twist_topic", twist_topic, "/cmd_vel");
 	nh.param<double>("time_s", time_s, 0.1);
 	//nh.param<double>("max_dist_to_rows", pd.max_dist_to_rows, 0.6);
 	//nh.param<int>("show_image", pd.show_image_boolean, 1);
@@ -180,7 +190,8 @@ int main(int argc, char** argv){
 	ros::Subscriber row_subscriber = n.subscribe<fmMsgs::row>(row_topic.c_str(), 10, &PotDecision::rowCallback, &pd);
 	ros::Subscriber wheel_subscriber = n.subscribe<fmMsgs::float_data>(wheel_topic.c_str(), 10, &PotDecision::wheelCallback, &pd);
 	ros::Subscriber gyro_subscriber = n.subscribe<fmMsgs::gyroscope>(gyro_topic.c_str(), 10, &PotDecision::gyroCallback, &pd);
-	//pd.row_pub = n.advertise<fmMsgs::row>(row_topic.c_str(), 10);
+
+	pd.twist_pub = n.advertise<geometry_msgs::TwistStamped>(twist_topic.c_str(), 10);
 	
 	ros::Timer timer = n.createTimer(ros::Duration(time_s), &PotDecision::timerCallback, &pd);
 

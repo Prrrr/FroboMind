@@ -1,15 +1,16 @@
 <launch>
 	<group ns="lrs">
-		<node pkg="fmExtractors" name="pot_detector_node" type="pot_detector">
+		<node pkg="fmExtractors" name="pot_detector_node" type="pot_detector" output="screen">
 			<param name="laser_scan_topic" value="laser_msgs_1"/>
 			<param name="row_topic" value="row_topic"/>
 			<param name="max_dist_to_rows" value="0.6"/>
-			<param name="show_image" value="1"/>
+			<param name="show_image" value="0"/>
+			<param name="avg_time_buffer_size" value="10"/>
 		</node>
 	</group>
 	<group ns="Hilde">
 		<node pkg="fmPSP" type="hilde_ctrl_node" name="hilde_controller">
-			<param name="twist_subscriber_topic" value="/cmd_vel" type="string"/>
+			<param name="twist_subscriber_topic" value="/cmd_vel_test" type="string"/>
 			<param name="serial_subscriber_topic" value="slip_rx_topic" type="string"/>
 			<param name="serial_publisher_topic" value="slip_tx_topic" type="string"/>
 			<param name="wheel_speed_topic" value="wheel_speed_topic" type="string"/>
@@ -41,11 +42,12 @@
 			</node> -->
 	</group>
 	
-	<group ns="awesomeness">
-		<node pkg="fmDecisionMakers" name="pot_decision" type="pot_decision" output="screen">
+	<group ns="Navigation">
+		<node pkg="fmDecisionMakers" name="pot_decision" type="pot_decision">
 			<param name="row_topic" value="/lrs/row_topic"/>
 			<param name="wheel_topic" value="/Hilde/wheel_speed_topic"/>
 			<param name="gyro_topic" value="/fmSensors/Gyroscope"/>
+			<param name="twist_topic" value="/cmd_vel_test"/>
 			<param name="time_s" value="0.02" type="double"/>
 		</node>
 	</group>
