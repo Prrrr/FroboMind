@@ -16,6 +16,9 @@
 #include <cv_bridge/cv_bridge.h>
 #include "opencv/cv.h"
 #include "opencv/highgui.h"
+// For timing puposes
+#include "sys/time.h"
+#include "boost/circular_buffer.hpp"
 using namespace std;
 class PotDetector {
 private:
@@ -29,6 +32,9 @@ private:
 	void clearRawImg();
 	CvPoint intersection(CvPoint p1, CvPoint p2, CvPoint p3, CvPoint p4);
 	double distance(CvPoint p1, CvPoint p2);
+
+	// For timing puposes
+	boost::circular_buffer<int> avg_time;
 public:
 	PotDetector();
 	virtual ~PotDetector();
@@ -36,7 +42,7 @@ public:
 	const char* framedWindowName;
 	// parameters
 	double max_dist_to_rows;
-	int show_image_boolean;
+	int show_image_boolean, avg_time_buffer_size;
 	//Callbacks
 	void laserScanCallback(const sensor_msgs::LaserScan::ConstPtr& scan);
 	

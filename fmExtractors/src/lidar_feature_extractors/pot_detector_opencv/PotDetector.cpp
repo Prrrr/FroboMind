@@ -6,6 +6,7 @@
  */
 
 #include "PotDetector.h"
+
 using namespace std;
 /*
  * Constructor
@@ -13,6 +14,13 @@ using namespace std;
 PotDetector::PotDetector() {
 	rawData_img = cvCreateImage(cvSize(600, 600), 8, 3);
 	working_img = cvCreateImage(cvSize(600, 600), 8, 1);
+	// For timing purposes
+	avg_time = boost::circular_buffer<int>(avg_time_buffer_size);
+	//	Initialize timing buffer
+	for (int i = 0; i < avg_time.size(); i++)
+	{
+		avg_time.push_back(0);
+	}
 }
 /*
  * Destructor
@@ -33,9 +41,15 @@ void PotDetector::clearRawImg(){
 /*
  * Callback-function for the laser_scan. Runs Hough Lines calculation and chooses the appropriate lines
  * to represent rows. Specifies if they're on the left or right side and calculates the distance in
- * metres from the center (robot laser position) to the line, and the angle between the x-axis and the line.
+ * meterss from the center (robot laser position) to the line, and the angle between the x-axis and the line.
  */
 void PotDetector::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan){
+	// Test the time
+	struct timeval start, end;
+	long mtime, seconds, useconds;
+	static int min_time = 99, max_time = 0;
+	gettimeofday(&start, NULL);
+
 	// Clear the raw image data
 	clearRawImg();
 
@@ -58,8 +72,8 @@ void PotDetector::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr& lase
 	cvCvtColor(rawData_img, working_img, CV_BGR2GRAY);
 	//cvGaussianBlur( working_img, working_img, Size(9, 9), 2, 2 );// Doesn't exist like this
 
-	cvDilate(rawData_img,rawData_img,NULL,6);	// Works better with lines
-	cvErode(rawData_img,rawData_img,NULL,4);	// works better with lines
+//	cvDilate(rawData_img,rawData_img,NULL,6);	// Works better with lines
+//	cvErode(rawData_img,rawData_img,NULL,4);	// works better with lines
 
 	// Loads of calculations to find the lines
 	double rho = 0, theta = 0, a, b, x0, y0;
@@ -180,20 +194,22 @@ void PotDetector::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr& lase
 	row.leftvalid = 0;
 	
 	if (lmeancount){
-		ROS_INFO("Only left! dist: %f, ang %f", ldist, lang);
+		//ROS_INFO("Only left! dist: %f, ang %f", ldist, lang);
 		row.leftvalid = 1;
 		row.leftdistance = ldist;
 		row.leftangle = lang;
 	}
 	
 	if(rmeancount){
-		ROS_INFO("Only right! dist: %f, ang %f", rdist, rang);
+		//ROS_INFO("Only right! dist: %f, ang %f", rdist, rang);
 		row.rightvalid = 1;
 		row.rightdistance = rdist;
 		row.rightangle = rang;
 	}
 
-	row_pub.publish(row);
+	if (rmeancount || lmeancount){	// If rows are detected, publish message
+		row_pub.publish(row);
+	}
 	
 	// Draw vertical line
 	CvPoint p_vertical_a, p_vertical_b;
@@ -205,6 +221,32 @@ void PotDetector::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr& lase
 		// Show the image
 		cvShowImage(framedWindowName, rawData_img);
 	}
+
+	// Test the TIME
+	gettimeofday(&end, NULL);
+
+	seconds  = end.tv_sec  - start.tv_sec;
+	useconds = end.tv_usec - start.tv_usec;
+
+	mtime = ((seconds) * 1000 + useconds/1000.0) + 0.5;
+
+	if (mtime < min_time){
+		min_time = mtime;
+	}
+	if (mtime > max_time || mtime > 30){
+		max_time = mtime;
+	}
+	// average time
+	avg_time.push_back(mtime);
+	int sum = 0;
+	for (int i = 0; i < avg_time.size(); i++){
+		sum += avg_time[i];
+	}
+	sum = sum / avg_time.size();
+
+	ROS_INFO("time: %ld, min: %ld, max: %ld, avg: %d", mtime, min_time, max_time, sum);
+	//printf("Elapsed time: %ld milliseconds\n", mtime);
+
 }
 
 /*
@@ -271,6 +313,7 @@ int main(int argc, char** argv){
 	nh.param<string>("row_topic", row_topic, "row_topic");
 	nh.param<double>("max_dist_to_rows", pd.max_dist_to_rows, 0.6);
 	nh.param<int>("show_image", pd.show_image_boolean, 1);
+	nh.param<int>("avg_time_buffer_size", pd.avg_time_buffer_size, 10);
 	// Subscribes and publishers
 	ros::Subscriber laser_subscriber = n.subscribe<sensor_msgs::LaserScan>(laser_scan_topic.c_str(), 10, &PotDetector::laserScanCallback, &pd);
 	pd.row_pub = n.advertise<fmMsgs::row>(row_topic.c_str(), 10);
