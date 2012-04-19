@@ -197,11 +197,11 @@ int main(int argc, char** argv){
 	
 	// Subscribes and publishers
 	//ros::Subscriber laser_subscriber = n.subscribe<sensor_msgs::LaserScan>(laser_scan_topic.c_str(), 10, &PotDetector::laserScanCallback, &pd);
-	ros::Subscriber row_subscriber = n.subscribe<fmMsgs::row>(row_topic.c_str(), 10, &PotDecision::rowCallback, &pd);
+	ros::Subscriber row_subscriber = n.subscribe<fmMsgs::row>(row_topic.c_str(), 1, &PotDecision::rowCallback, &pd);
 	ros::Subscriber wheel_subscriber = n.subscribe<fmMsgs::float_data>(wheel_topic.c_str(), 10, &PotDecision::wheelCallback, &pd);
 	ros::Subscriber gyro_subscriber = n.subscribe<fmMsgs::gyroscope>(gyro_topic.c_str(), 10, &PotDecision::gyroCallback, &pd);
 
-	pd.twist_pub = n.advertise<geometry_msgs::TwistStamped>(twist_topic.c_str(), 10);
+	pd.twist_pub = n.advertise<geometry_msgs::TwistStamped>(twist_topic.c_str(), 1);
 	
 	ros::Timer timer = n.createTimer(ros::Duration(pd.time_s), &PotDecision::timerCallback, &pd);
 

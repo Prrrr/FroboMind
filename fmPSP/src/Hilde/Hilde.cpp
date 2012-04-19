@@ -106,10 +106,10 @@ Hilde::Hilde() {
 	local_n.param<double>("dead_reckoning_linearization_turn_rate_threshold", dead_reckoning_linearization_turn_rate_threshold, 0.01);
 	
 	// Subscribers and publisher
-	twist_subscriber = global_n.subscribe<geometry_msgs::TwistStamped>(twist_subscriber_topic.c_str(), 100, &Hilde::twistCallback,this);
-	robocard_subscriber = global_n.subscribe<fmMsgs::serial_bin>(robocard_subscriber_topic.c_str(), 100, &Hilde::serialCallback, this);
-	robocard_publisher = global_n.advertise<fmMsgs::serial_bin>(robocard_publisher_topic.c_str(), 1000);
-	wheelspeed_publisher = global_n.advertise<fmMsgs::float_data>(wheel_speed_topic.c_str(), 1000);
+	twist_subscriber = global_n.subscribe<geometry_msgs::TwistStamped>(twist_subscriber_topic.c_str(), 1, &Hilde::twistCallback,this);
+	robocard_subscriber = global_n.subscribe<fmMsgs::serial_bin>(robocard_subscriber_topic.c_str(), 5, &Hilde::serialCallback, this);
+	robocard_publisher = global_n.advertise<fmMsgs::serial_bin>(robocard_publisher_topic.c_str(), 1);
+	wheelspeed_publisher = global_n.advertise<fmMsgs::float_data>(wheel_speed_topic.c_str(), 1);
 	
 	// Instantiate circular buffers for the encoders
 	left_encoder_ticks = boost::circular_buffer<int>(encoder_circular_buffer_size);

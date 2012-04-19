@@ -44,6 +44,14 @@ void PotDetector::clearRawImg(){
  * meterss from the center (robot laser position) to the line, and the angle between the x-axis and the line.
  */
 void PotDetector::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan){
+	static int run = 0;
+	
+	if (run) {
+		run = 0;
+		return;
+	} else {
+		run = 1;	
+	}
 	// Test the time
 	struct timeval start, end;
 	long mtime, seconds, useconds;
@@ -315,7 +323,7 @@ int main(int argc, char** argv){
 	nh.param<int>("show_image", pd.show_image_boolean, 1);
 	nh.param<int>("avg_time_buffer_size", pd.avg_time_buffer_size, 10);
 	// Subscribes and publishers
-	ros::Subscriber laser_subscriber = n.subscribe<sensor_msgs::LaserScan>(laser_scan_topic.c_str(), 10, &PotDetector::laserScanCallback, &pd);
+	ros::Subscriber laser_subscriber = n.subscribe<sensor_msgs::LaserScan>(laser_scan_topic.c_str(), 1, &PotDetector::laserScanCallback, &pd);
 	pd.row_pub = n.advertise<fmMsgs::row>(row_topic.c_str(), 10);
 	// Start a thread for windows if it is TRUE
 	if (pd.show_image_boolean){
