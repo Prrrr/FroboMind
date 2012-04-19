@@ -129,11 +129,11 @@ void PotDecision::calculate_odometry() {
 		//cross_track_error = (rightdistance - 0.35) + (rightangle);
 		dist_cte = rightdistance - mean_driving_distance_from_rows;
 	}
-	ang_cte = th_row;
+	ang_cte = -th_row;
 	
 	cross_track_error = dist_cte * cte_weight_distance + ang_cte * cte_weight_angle;
 	if (cross_track_error){		// If there is a cross track error, turn robot (publish message)
-		ROS_INFO("CTE: %f", cross_track_error);
+		ROS_INFO("CTE: %f, Angle: %f", cross_track_error, ang_cte);
 
 		//ROS_INFO("\t%f\t%f\t%f\t%f\t%f\t%f", x, y, th, idt, wticks, wgyro);
 		// Publish twist to ros
