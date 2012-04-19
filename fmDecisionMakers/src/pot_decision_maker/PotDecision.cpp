@@ -71,7 +71,7 @@ void PotDecision::calculate_odometry() {
 	static double b =  (2 * base_link_radius_to_wheels); // Length between the wheels
 	static double gyro_first_value = 1000;
 	static double idt = 0;
-	static double dt = 0.02;
+	static double dt = time_s;
 	
 	// Initialize gyro to get rid of offset.
 	if (gyro_first_value == 1000 && new_gyro) {
@@ -132,8 +132,10 @@ void PotDecision::calculate_odometry() {
 	ang_cte = -th_row;
 	
 	cross_track_error = dist_cte * cte_weight_distance + ang_cte * cte_weight_angle;
+	double cte_t = cross_track_error;
+	cross_track_error = cte_pid.run(cross_track_error, dt);
 	if (cross_track_error){		// If there is a cross track error, turn robot (publish message)
-		ROS_INFO("CTE: %f, Angle: %f", cross_track_error, ang_cte);
+		ROS_INFO("PIDet: %f, NonPIDet: %f", cross_track_error, cte_t);
 
 		//ROS_INFO("\t%f\t%f\t%f\t%f\t%f\t%f", x, y, th, idt, wticks, wgyro);
 		// Publish twist to ros
@@ -173,18 +175,21 @@ int main(int argc, char** argv){
 	
 	// Ros params
 	string wheel_topic, row_topic, gyro_topic, twist_topic;
-	double time_s;
+	
 	//nh.param<string>("laser_scan_topic", laser_scan_topic, "laser_scan_topic");
 	nh.param<string>("row_topic", row_topic, "row_topic");
 	nh.param<string>("wheel_topic", wheel_topic, "wheel_topic");
 	nh.param<string>("gyro_topic", gyro_topic, "gyro_topic");
 	nh.param<string>("twist_topic", twist_topic, "/cmd_vel");
-	nh.param<double>("time_s", time_s, 0.1);
+	nh.param<double>("time_s", pd.time_s, 0.1);
 	nh.param<double>("linear_mean_velocity", pd.linear_mean_velocity, 0.5);
 	nh.param<double>("mean_driving_distance_from_rows", pd.mean_driving_distance_from_rows, 0.35);
 	nh.param<double>("cte_weight_angle", pd.cte_weight_angle, 0.5);
 	nh.param<double>("cte_weight_distance", pd.cte_weight_distance, 0.5);
 	nh.param<double>("base_link_radius_to_wheels", pd.base_link_radius_to_wheels, 0.185);
+	nh.param<double>("cte_kp", pd.cte_kp, 1);
+	nh.param<double>("cte_ki", pd.cte_ki, 0);
+	nh.param<double>("cte_kd", pd.cte_kd, 0);
 
 
 	//nh.param<double>("max_dist_to_rows", pd.max_dist_to_rows, 0.6);
@@ -198,8 +203,10 @@ int main(int argc, char** argv){
 
 	pd.twist_pub = n.advertise<geometry_msgs::TwistStamped>(twist_topic.c_str(), 10);
 	
-	ros::Timer timer = n.createTimer(ros::Duration(time_s), &PotDecision::timerCallback, &pd);
+	ros::Timer timer = n.createTimer(ros::Duration(pd.time_s), &PotDecision::timerCallback, &pd);
 
+	pd.cte_pid(pd.cte_kp, pd.cte_ki, pd.cte_kd);
+	
 	// Spin
 	ros::spin();
 	return 0;

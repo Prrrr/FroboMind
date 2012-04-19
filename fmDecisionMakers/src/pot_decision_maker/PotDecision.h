@@ -13,6 +13,8 @@
 #include "fmMsgs/gyroscope.h"
 #include "geometry_msgs/TwistStamped.h"
 #include "math.h"
+#include "pid.h"
+	 
 using namespace std;
 class PotDecision {
 private:
@@ -39,6 +41,8 @@ public:
 	double linear_mean_velocity, mean_driving_distance_from_rows;
 	double cte_weight_angle, cte_weight_distance;
 	double base_link_radius_to_wheels;
+	double time_s;
+	double cte_kp, cte_ki, cte_kd;
 
 	// Functions
 	void rowCallback(const fmMsgs::row::ConstPtr& row);
@@ -50,6 +54,9 @@ public:
 
 	// Publisher
 	ros::Publisher twist_pub;
+	
+	// PID
+	PID cte_pid; 
 };
 
 #endif /* POTDECISION_H_ */

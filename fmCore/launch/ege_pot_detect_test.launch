@@ -10,6 +10,9 @@
 			<param name="mean_driving_distance_from_rows" value="0.35" type="double"/>
 			<param name="cte_weight_angle" value="0.5" type="double"/>
 			<param name="cte_weight_distance" value="0.5" type="double"/>
+			<param name="cte_kp" value="1" type="double"/>
+			<param name="cte_ki" value="0" type="double"/>
+			<param name="cte_kd" value="0" type="double"/>
 		</node>
 	</group>
 
