@@ -1,7 +1,9 @@
 <launch>
-	<group ns="fmExtractors">
-		    <node pkg="fmExtractors" type="lidar_row_detector" name="lidar_row_detector" output="screen"/> 
-			<param name="subscriber_topic" value="/lrs/laser_msgs_1" />
+	<group ns="lrs">
+		<node pkg="fmExtractors" type="object_avoidance" name="object_avoidance_node" output="screen"/> 
+			<param name="laser_scan_topic" value="laser_msgs_1" />
+			<param name="show_image" value="1" />
+			<param name="robot_clearence_width" value="0.6" />
 	</group>
 	
   <!-- <group ns="encoder_left">

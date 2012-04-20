@@ -24,6 +24,10 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 # Pot detector node
 rosbuild_add_executable(pot_detector src/lidar_feature_extractors/pot_detector_opencv/PotDetector.cpp)
 
+# Object Avoidance node
+rosbuild_add_executable(object_avoidance src/lidar_feature_extractors/simple_object_avoidance/SimpleObjectAvoidance.cpp)
+
+
 #rosbuild_add_executable(lidar_row_detector src/lidar_feature_extractors/lidar_row_detect_opencv/maize_detection_node.cpp)
 #rosbuild_add_executable(lidar_row_detector src/lidar_feature_extractors/lidar_row_detect_opencv/maize_detection.cpp)
 
