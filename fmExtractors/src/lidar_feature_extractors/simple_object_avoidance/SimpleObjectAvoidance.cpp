@@ -160,8 +160,9 @@ void SimpleObjectAvoidance::laserScanCallback(const sensor_msgs::LaserScan::Cons
 		object_msg.header.stamp = ros::Time::now();
 		object_publisher.publish(object_msg);
 	//}
-
-	cvShowImage(framedWindowName,raw_img);
+	if(show_image) {
+		cvShowImage(framedWindowName,raw_img);
+	}
 }
 
 int main(int argc, char** argv){

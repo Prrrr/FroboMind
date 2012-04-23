@@ -1,31 +1,48 @@
 <?xml version="1.0"?>
 <launch>
+	
 	<group ns="Navigation">
 		<node pkg="fmDecisionMakers" name="pot_decision" type="pot_decision" output="screen">
 			<param name="row_topic" value="/lrs/row_topic"/>
 			<param name="wheel_topic" value="/Hilde/wheel_speed_topic"/>
 			<param name="gyro_topic" value="/fmSensors/Gyroscope"/>
 			<param name="twist_topic" value="/cmd_vel"/>
+			<param name="object_topic" value="/lrs/object_topic"/>
 			<param name="time_s" value="0.02" type="double"/>
 			<param name="linear_mean_velocity" value="0.5" type="double"/>
 			<param name="mean_driving_distance_from_rows" value="0.35" type="double"/>
-			<param name="cte_weight_angle" value="0.5" type="double"/>
-			<param name="cte_weight_distance" value="0.5" type="double"/>
-			<param name="cte_kp" value="5" type="double"/>
+			<param name="cte_weight_angle" value="0.7" type="double"/>
+			<param name="cte_weight_distance" value="0.3" type="double"/>
+			<param name="cte_kp" value="0.5" type="double"/>
 			<param name="cte_ki" value="0" type="double"/>
 			<param name="cte_kd" value="0" type="double"/>
 		</node>
 	</group>
+	
 
 	<group ns="lrs">
-		<node pkg="fmExtractors" name="pot_detector_node" type="pot_detector">
+		<!-- <node pkg="fmExtractors" name="pot_detector_node" type="pot_detector">
 			<param name="laser_scan_topic" value="laser_msgs_1"/>
 			<param name="row_topic" value="row_topic"/>
 			<param name="max_dist_to_rows" value="0.6"/>
 			<param name="show_image" value="0"/>
 			<param name="avg_time_buffer_size" value="10"/>
+		</node> -->
+		<node pkg="fmExtractors" type="object_avoidance" name="object_avoidance_node" output="screen"> 
+			<param name="laser_scan_topic" value="laser_msgs_1" />
+			<param name="object_topic" value="object_topic" />
+			<param name="show_image" value="0" />
+			<param name="robot_clearence_width" value="0.28" />
+			<param name="robot_stop_zone" value="0.2" />
+			<param name="robot_turn_zone" value="0.3" />
+			<param name="robot_turn_zone_extra_width" value="0.05" />
+			<!-- For the pot detection row boxe-->
+			<param name="row_box_start_value" value="-0.20" />
+			<param name="row_box_width" value="0.30" />
+			<param name="row_box_height" value="1" />
+			<param name="row_box_count" value="5" />
 		</node>
-
+		
 		<node pkg="fmSensors" name="lms111_front" type="lms111_node">
 			<param name="host" value="192.168.0.11"/>
 			<param name="topic_id" value="laser_msgs_1"/>
@@ -68,12 +85,6 @@
 			<param name="base_link_length_to_rear_wheel" value="0.28" type="double"/>
 			<param name="base_link_radius_to_wheels" value="0.185" type="double"/>
 			<param name="dead_reckoning_linearization_turn_rate_threshold" value="0.0001" type="double"/>
-			<!--<param name="max_linear_velocity" value="1.0" type="double"/>
-	<param name="bias_linear_velocity" value="1.0" type="double"/>
-	<param name="bias_linear_velocity_percentage" value="0.8" type="double"/>	
-	<param name="base_link_radius_to_wheels" value="0.185" type="double"/>
-	<param name="base_link_length_to_rear_wheel" value="0.28" type="double"/>
--->
 		</node>
 		<node pkg="fmBSP" name="slip_node" type="slip_node">
 			<param name="unwrapped_topic" value="slip_rx_topic"/>

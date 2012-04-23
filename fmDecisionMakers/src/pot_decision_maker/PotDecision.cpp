@@ -98,13 +98,16 @@ void PotDecision::calculate_twist() {
 		
 		dist_cte = 1 / dist_cte;
 		ang_cte = 1 / ang_cte;
+		
+		dist_cte = (ang_cte > 0) ? -dist_cte : dist_cte;
+		
 	} else {
 		dist_cte = 0;
 		ang_cte = 0;
 	}
 	
 	
-	cross_track_error = dist_cte * cte_weight_distance -ang_cte * cte_weight_angle;
+	cross_track_error = dist_cte * cte_weight_distance - ang_cte * cte_weight_angle;
 	double cte_t = cross_track_error;
 	cross_track_error = cte_pid.run(cross_track_error, dt);
 	ROS_INFO("PIDet: %f, NonPIDet: %f", cross_track_error, cte_t);
