@@ -10,20 +10,21 @@
 SimpleObjectAvoidance::SimpleObjectAvoidance() {
 	// ROS NodeHandles
 	n = ros::NodeHandle();
+	nh = ros::NodeHandle("~");
 	// ROS PARAMETERS
-	n.param<string>("laser_scan_topic", laser_scan_topic, "laser_scan_topic");
-	n.param<int>("show_image", show_image, 1);
-	n.param<double>("robot_clearence_width", robot_clearence_width, 0.2);
-	n.param<double>("robot_stop_zone", robot_stop_zone, 0.2);
-	n.param<double>("robot_turn_zone", robot_turn_zone, 0.3);
-	n.param<double>("robot_turn_zone_extra_width", robot_turn_zone_extra_width, 0.05);
-	n.param<string>("object_topic", object_topic, "object_topic");
+	nh.param<string>("laser_scan_topic", laser_scan_topic, "laser_scan_topic");
+	nh.param<int>("show_image", show_image, 1);
+	nh.param<double>("robot_clearence_width", robot_clearence_width, 0.2);
+	nh.param<double>("robot_stop_zone", robot_stop_zone, 0.2);
+	nh.param<double>("robot_turn_zone", robot_turn_zone, 0.3);
+	nh.param<double>("robot_turn_zone_extra_width", robot_turn_zone_extra_width, 0.05);
+	nh.param<string>("object_topic", object_topic, "object_topic");
 
 	// For row boxes
-	n.param<double>("row_box_start_value", row_box_start_value, -0.2);
-	n.param<double>("row_box_height", row_box_height, 1);
-	n.param<double>("row_box_width", row_box_width, 0.2);
-	n.param<int>("row_box_count", row_box_count, 5);
+	nh.param<double>("row_box_start_value", row_box_start_value, -0.2);
+	nh.param<double>("row_box_height", row_box_height, 1);
+	nh.param<double>("row_box_width", row_box_width, 0.2);
+	nh.param<int>("row_box_count", row_box_count, 5);
 
 	// ROS PUBLISHERS AND SUBSCRIBERS
 	laser_subscriber = n.subscribe<sensor_msgs::LaserScan>(laser_scan_topic.c_str(), 1, &SimpleObjectAvoidance::laserScanCallback, this);
@@ -154,11 +155,11 @@ void SimpleObjectAvoidance::laserScanCallback(const sensor_msgs::LaserScan::Cons
 	}
 
 	// Publish msg
-	if (object_msg.right_blocked == 1 || object_msg.left_blocked == 1 || object_msg.stop_zone_occupied == 1){
+	//if (object_msg.right_blocked == 1 || object_msg.left_blocked == 1 || object_msg.stop_zone_occupied == 1){
 		++object_msg.header.seq;
 		object_msg.header.stamp = ros::Time::now();
 		object_publisher.publish(object_msg);
-	}
+	//}
 
 	cvShowImage(framedWindowName,raw_img);
 }

@@ -41,6 +41,19 @@ void PotDecision::wheelCallback(const fmMsgs::float_data::ConstPtr& speeds) {
 	wheel_speed_left = speeds->data[1];
 }
 
+void PotDecision::objectCallback(const fmMsgs::detected_objects::ConstPtr& objects) {
+	new_object_message_received = 1;
+	new_left_object = objects->left_blocked;
+	new_right_object = objects->right_blocked;
+	new_stop = objects->stop_zone_occupied;
+	
+	object_left_distance	= objects->closest_object_distance_left;
+	object_right_distance	= objects->closest_object_distance_right;
+	object_left_angle		= objects->closest_object_angle_left;
+	object_right_angle		= objects->closest_object_angle_right;
+	//ROS_INFO("Object received: Left %d, Right %d, Stop %d", new_left_object, new_right_object, new_stop);
+}
+
 void PotDecision::gyroCallback(const fmMsgs::gyroscope::ConstPtr& gyro) {
 	//ROS_INFO("Gyro z: %f", gyro->z);
 	new_gyro = 1;
@@ -56,12 +69,66 @@ void PotDecision::timerCallback(const ros::TimerEvent& event) {
 		new_gyro = 0;
 	}
 	
-	
+	if(new_object_message_received)
+	{
+		new_object_message_received = 0;
+		calculate_twist();
+	}
 }
 
 void PotDecision::calculate_twist() {
 	//ROS_INFO("Timerz!");
+	static double dt = time_s;
+	cross_track_error = 0;
+	double dist_cte = 0, ang_cte = 0;
 	
+	// Start driving decisio
+	if (new_left_object || new_right_object) {
+		if(new_left_object && new_right_object)
+		{
+			dist_cte = (object_left_distance < object_right_distance) ? object_left_distance: object_right_distance;
+			ang_cte = (object_left_distance < object_right_distance) ? object_left_angle: object_right_angle;
+		} else if(new_left_object) {
+			dist_cte 	= object_left_distance;
+			ang_cte 	= object_left_angle;
+		} else {
+			dist_cte 	= object_right_distance;
+			ang_cte 	= object_right_angle;
+		}
+		
+		dist_cte = 1 / dist_cte;
+		ang_cte = 1 / ang_cte;
+	} else {
+		dist_cte = 0;
+		ang_cte = 0;
+	}
+	
+	
+	cross_track_error = dist_cte * cte_weight_distance -ang_cte * cte_weight_angle;
+	double cte_t = cross_track_error;
+	cross_track_error = cte_pid.run(cross_track_error, dt);
+	ROS_INFO("PIDet: %f, NonPIDet: %f", cross_track_error, cte_t);
+	
+	//ROS_INFO("\t%f\t%f\t%f\t%f\t%f\t%f", x, y, th, idt, wticks, wgyro);
+	// Publish twist to ros
+	++twist_msg.header.seq;
+	twist_msg.header.stamp = ros::Time::now();
+	twist_msg.twist.linear.x = linear_mean_velocity;
+	twist_msg.twist.angular.z = cross_track_error;
+	
+	
+	
+	if (new_stop) {
+		twist_msg.twist.linear.x = 0;
+		twist_msg.twist.angular.z = 0;
+	}
+	
+	
+	twist_pub.publish(twist_msg);
+	
+	new_stop = 0;
+	new_left_object = 0;
+	new_right_object = 0;
 }
 
 
@@ -109,42 +176,67 @@ void PotDecision::calculate_odometry() {
 	th	= fmod((th + beta), (2.0 * M_PI));
 	
 	double th_row = 0;
-	cross_track_error = 0;
-	double dist_cte = 0, ang_cte = 0;
+	//cross_track_error = 0;
+	//double dist_cte = 0, ang_cte = 0;
 	if(new_l_row && new_r_row)
 	{
 		th_row = (rightangle + leftangle) / 2;
 		th = th * 0.5 + th_row * 0.5;
-		dist_cte = rightdistance - leftdistance;
+		//dist_cte = rightdistance - leftdistance;
 	} else if(new_l_row){
 		th_row = leftangle;
 		th = th * 0.5 + th_row * 0.5;
 		
 		//cross_track_error = (leftdistance - 0.35) + (leftangle);
-		dist_cte = leftdistance - mean_driving_distance_from_rows;
+		//dist_cte = leftdistance - mean_driving_distance_from_rows;
 	} else if(new_r_row){
 		th_row = rightangle;
 		th = th * 0.5 + th_row * 0.5;
 		
 		//cross_track_error = (rightdistance - 0.35) + (rightangle);
-		dist_cte = rightdistance - mean_driving_distance_from_rows;
+		//dist_cte = rightdistance - mean_driving_distance_from_rows;
 	}
-	ang_cte = -th_row;
 	
-	cross_track_error = dist_cte * cte_weight_distance + ang_cte * cte_weight_angle;
-	double cte_t = cross_track_error;
-	cross_track_error = cte_pid.run(cross_track_error, dt);
-	if (cross_track_error){		// If there is a cross track error, turn robot (publish message)
-		ROS_INFO("PIDet: %f, NonPIDet: %f", cross_track_error, cte_t);
-
-		//ROS_INFO("\t%f\t%f\t%f\t%f\t%f\t%f", x, y, th, idt, wticks, wgyro);
-		// Publish twist to ros
-		++twist_msg.header.seq;
-		twist_msg.header.stamp = ros::Time::now();
-		twist_msg.twist.linear.x = linear_mean_velocity;
-		twist_msg.twist.angular.z = cross_track_error;
-		twist_pub.publish(twist_msg);
-	}
+	// // Start driving decisio
+	// if (new_left_object || new_right_object) {
+	// 	if(new_left_object && new_right_object)
+	// 	{
+	// 		dist_cte = (object_left_distance < object_right_distance) ? object_left_distance: object_right_distance;
+	// 		ang_cte = (object_left_distance < object_right_distance) ? object_left_angle: object_right_angle;
+	// 	} else if(new_left_object) {
+	// 		dist_cte 	= object_left_distance;
+	// 		ang_cte 	= object_left_angle;
+	// 	} else {
+	// 		dist_cte 	= object_right_distance;
+	// 		ang_cte 	= object_right_angle;
+	// 	}
+	// } else {
+	// 	dist_cte = 0;
+	// 	ang_cte = 0;
+	// }
+	// 
+	// 
+	// cross_track_error = dist_cte * cte_weight_distance -ang_cte * cte_weight_angle;
+	// double cte_t = cross_track_error;
+	// cross_track_error = cte_pid.run(cross_track_error, dt);
+	// ROS_INFO("PIDet: %f, NonPIDet: %f", cross_track_error, cte_t);
+	// 
+	// //ROS_INFO("\t%f\t%f\t%f\t%f\t%f\t%f", x, y, th, idt, wticks, wgyro);
+	// // Publish twist to ros
+	// ++twist_msg.header.seq;
+	// twist_msg.header.stamp = ros::Time::now();
+	// twist_msg.twist.linear.x = linear_mean_velocity;
+	// twist_msg.twist.angular.z = cross_track_error;
+	// 
+	// 
+	// 
+	// if (new_stop) {
+	// 	twist_msg.twist.linear.x = 0;
+	// 	twist_msg.twist.angular.z = 0;
+	// }
+	// 
+	// 
+	// twist_pub.publish(twist_msg);
 
 	
 	// Update time
@@ -153,6 +245,9 @@ void PotDecision::calculate_odometry() {
 	// Values used.
 	new_l_row = 0;
 	new_r_row = 0;
+	// new_stop = 0;
+	// 	new_left_object = 0;
+	// 	new_right_object = 0;
 }
 
 
@@ -174,13 +269,14 @@ int main(int argc, char** argv){
 	PotDecision pd;
 	
 	// Ros params
-	string wheel_topic, row_topic, gyro_topic, twist_topic;
+	string wheel_topic, row_topic, gyro_topic, twist_topic, object_topic;
 	
 	//nh.param<string>("laser_scan_topic", laser_scan_topic, "laser_scan_topic");
 	nh.param<string>("row_topic", row_topic, "row_topic");
 	nh.param<string>("wheel_topic", wheel_topic, "wheel_topic");
 	nh.param<string>("gyro_topic", gyro_topic, "gyro_topic");
 	nh.param<string>("twist_topic", twist_topic, "/cmd_vel");
+	nh.param<string>("object_topic", object_topic, "object_topic");
 	nh.param<double>("time_s", pd.time_s, 0.1);
 	nh.param<double>("linear_mean_velocity", pd.linear_mean_velocity, 0.5);
 	nh.param<double>("mean_driving_distance_from_rows", pd.mean_driving_distance_from_rows, 0.35);
@@ -200,6 +296,7 @@ int main(int argc, char** argv){
 	ros::Subscriber row_subscriber = n.subscribe<fmMsgs::row>(row_topic.c_str(), 1, &PotDecision::rowCallback, &pd);
 	ros::Subscriber wheel_subscriber = n.subscribe<fmMsgs::float_data>(wheel_topic.c_str(), 10, &PotDecision::wheelCallback, &pd);
 	ros::Subscriber gyro_subscriber = n.subscribe<fmMsgs::gyroscope>(gyro_topic.c_str(), 10, &PotDecision::gyroCallback, &pd);
+	ros::Subscriber object_subscriber = n.subscribe<fmMsgs::detected_objects>(object_topic.c_str(), 10, &PotDecision::objectCallback, &pd);
 
 	pd.twist_pub = n.advertise<geometry_msgs::TwistStamped>(twist_topic.c_str(), 1);
 	

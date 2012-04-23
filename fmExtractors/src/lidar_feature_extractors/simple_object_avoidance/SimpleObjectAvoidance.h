@@ -32,6 +32,7 @@ private:
 	// ROS
 	// Nodehandle
 	ros::NodeHandle n;
+	ros::NodeHandle nh;
 	// Subscribers & publishers
 	ros::Subscriber laser_subscriber;
 	ros::Publisher object_publisher;
