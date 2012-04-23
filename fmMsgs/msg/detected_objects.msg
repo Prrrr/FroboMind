@@ -1,0 +1,9 @@
+Header header
+int8 right_blocked
+float64 closest_object_distance_right
+float64 closest_object_angle_right
+int8 left_blocked
+float64 closest_object_distance_left
+float64 closest_object_angle_left
+int8 stop_zone_occupied
+ 
