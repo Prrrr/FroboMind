@@ -89,11 +89,20 @@ void SimpleObjectAvoidance::laserScanCallback(const sensor_msgs::LaserScan::Cons
 	// Draw boxes
 	double box_height = row_box_height / row_box_count;
 	for (int i = 0; i < row_box_count; i++){
+		// Right side
 		recta.x = 300 + (row_box_start_value + box_height*i) * 100;
 		recta.y = 300 + (robot_clearence_width) * 100;
 		rectb.x = recta.x + box_height * 100;
 		rectb.y = 300 + (robot_clearence_width + row_box_width) * 100;
-		//cvRectangle(raw_img,recta, rectb, CV_RGB(0,128,255),1,1,0);
+		cvRectangle(raw_img,recta, rectb, CV_RGB(0,128,255),1,1,0);
+		
+		// Left side
+		recta.x = 300 + (row_box_start_value + box_height*i) * 100;
+		recta.y = 300 - (robot_clearence_width) * 100;
+		rectb.x = recta.x + box_height * 100;
+		rectb.y = 300 - (robot_clearence_width + row_box_width) * 100;
+		cvRectangle(raw_img,recta, rectb, CV_RGB(0,128,255),1,1,0);
+		
 	}
 
 	// Clear the objects message

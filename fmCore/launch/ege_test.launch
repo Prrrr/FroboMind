@@ -9,10 +9,10 @@
 			<param name="robot_turn_zone" value="0.3" />
 			<param name="robot_turn_zone_extra_width" value="0.05" />
 			<!-- For the pot detection row boxe-->
-			<param name="row_box_start_value" value="-0.20" />
+			<param name="row_box_start_value" value="-0.10" />
 			<param name="row_box_width" value="0.30" />
 			<param name="row_box_height" value="1" />
-			<param name="row_box_count" value="5" />
+			<param name="row_box_count" value="10" />
 		</node>
 	</group>
 	<group ns="Navigation">
@@ -32,7 +32,7 @@
 			<param name="cte_kd" value="0" type="double"/>
 		</node>
 	</group>
-	<group ns="Hilde">
+	<!-- <group ns="Hilde">
 		<node pkg="fmPSP" type="hilde_ctrl_node" name="hilde_controller">
 			<param name="twist_subscriber_topic" value="/cmd_vel_test" type="string"/>
 			<param name="serial_subscriber_topic" value="slip_rx_topic" type="string"/>
@@ -45,7 +45,7 @@
 			<param name="base_link_radius_to_wheels" value="0.185" type="double"/>
 			<param name="dead_reckoning_linearization_turn_rate_threshold" value="0.0001" type="double"/>
 		</node>
-	</group>
+	</group> -->
 	
   <!-- <group ns="encoder_left">
     <node pkg="fmBSP" name="serial_node" type="serial_bytes_node" output="screen">
