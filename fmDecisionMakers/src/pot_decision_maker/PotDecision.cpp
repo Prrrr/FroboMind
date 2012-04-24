@@ -119,7 +119,7 @@ void PotDecision::calculate_twist() {
 	
 	double cte_t = cross_track_error;
 	cross_track_error = cte_pid.run(cross_track_error, dt);
-	ROS_INFO("PIDet: %f, NonPIDet: %f", cross_track_error, cte_t);
+	//ROS_INFO("PIDet: %f, NonPIDet: %f", cross_track_error, cte_t);
 	
 	//ROS_INFO("\t%f\t%f\t%f\t%f\t%f\t%f", x, y, th, idt, wticks, wgyro);
 	// Publish twist to ros

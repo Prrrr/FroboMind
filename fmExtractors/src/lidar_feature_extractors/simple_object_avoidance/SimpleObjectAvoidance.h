@@ -13,12 +13,14 @@
 #include "sensor_msgs/PointCloud.h"
 #include "laser_geometry/laser_geometry.h"
 #include "fmMsgs/detected_objects.h"
+#include "fmMsgs/object_row.h"
 
 // OpenCv includes
 #include <cv_bridge/cv_bridge.h>
 #include "opencv/cv.h"
 #include "opencv/highgui.h"
 #include "math.h"
+#include "vector"
 
 using namespace std;
 
@@ -36,17 +38,27 @@ private:
 	// Subscribers & publishers
 	ros::Subscriber laser_subscriber;
 	ros::Publisher object_publisher;
+	ros::Publisher object_row_publisher;
+	
 	// msgs
 	fmMsgs::detected_objects object_msg;
+	fmMsgs::object_row object_row_msg;
+	
 	// Parameters
-	string laser_scan_topic, object_topic;
+	string laser_scan_topic, object_topic, object_row_topic;
 	int show_image;
 	double robot_clearence_width, robot_stop_zone, robot_turn_zone, robot_turn_zone_extra_width;
+	
 	// Rows of boxes
-	double row_box_start_value, row_box_width, row_box_height;
+	double row_box_start_value, row_box_width, row_box_height, row_individual_box_height;
 	int row_box_count;
+	
 	// Callbacks
 	void laserScanCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan);
+	
+	// Detected rows
+	// vector<int> left_row;
+	// vector<int> right_row;
 public:
 	// Constructor & Destructor
 	SimpleObjectAvoidance();
