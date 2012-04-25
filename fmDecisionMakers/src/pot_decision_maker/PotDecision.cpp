@@ -16,12 +16,61 @@ PotDecision::PotDecision() {
 	new_gyro = 0;
 	new_l_row = 0;
 	new_r_row = 0;
+	new_object_row = 0;
+	new_object_message_received = 0;
+	
+	// Object row data initialization
+	object_row_resolution = 0;
+	object_row_start_position = 0;
 }
 /*
  * Destructor
  */
 PotDecision::~PotDecision() {
 
+}
+
+void PotDecision::extract_object_row_data() {
+	static int treshhold = 0;
+	int l_end_found = -1, r_end_found = -1;
+	
+	for(int i = 0; i < object_row_left.size(); i++)
+	{
+		if(object_row_left[i] > treshhold) {
+			l_end_found = i;
+		}
+		if(object_row_right[i] > treshhold) {
+			r_end_found = i;
+		}
+	}
+	
+	object_row_end_position_left = object_row_start_position + ((l_end_found + 1) * object_row_resolution);
+	object_row_end_position_right = object_row_start_position + ((r_end_found + 1) * object_row_resolution);
+	
+	//ROS_INFO("Right row ends at: %f", r_end);
+	//ROS_INFO("Left row ends at: %f", l_end);
+}
+
+void PotDecision::objectRowCallback(const fmMsgs::object_row::ConstPtr& row) {
+	//ROS_INFO("Object row Callback!");
+	
+	// Initialize the data and dataholders
+	if(object_row_resolution == 0 && object_row_start_position == 0)
+	{
+		object_row_resolution = row->resolution;
+		object_row_start_position = row->row_start_position;
+		for(int n = 0; n < row->size; n++) {
+			object_row_left.push_back(0);
+			object_row_right.push_back(0);
+		}
+	}
+	
+	for(int n = 0; n < row->size; n++) {
+		object_row_left[n]	= row->left_row[n];
+		object_row_right[n]	= row->right_row[n];
+	}
+	
+	new_object_row = 1;
 }
 
 void PotDecision::rowCallback(const fmMsgs::row::ConstPtr& row) {
@@ -73,6 +122,12 @@ void PotDecision::timerCallback(const ros::TimerEvent& event) {
 	{
 		new_object_message_received = 0;
 		calculate_twist();
+	}
+	
+	if(new_object_row)
+	{
+		new_object_row = 0;
+		extract_object_row_data();
 	}
 }
 
@@ -281,7 +336,7 @@ int main(int argc, char** argv){
 	PotDecision pd;
 	
 	// Ros params
-	string wheel_topic, row_topic, gyro_topic, twist_topic, object_topic;
+	string wheel_topic, row_topic, gyro_topic, twist_topic, object_topic, object_row_topic;
 	
 	//nh.param<string>("laser_scan_topic", laser_scan_topic, "laser_scan_topic");
 	nh.param<string>("row_topic", row_topic, "row_topic");
@@ -289,6 +344,7 @@ int main(int argc, char** argv){
 	nh.param<string>("gyro_topic", gyro_topic, "gyro_topic");
 	nh.param<string>("twist_topic", twist_topic, "/cmd_vel");
 	nh.param<string>("object_topic", object_topic, "object_topic");
+	nh.param<string>("object_row_topic", object_row_topic, "object_row_topic");
 	nh.param<double>("time_s", pd.time_s, 0.1);
 	nh.param<double>("linear_mean_velocity", pd.linear_mean_velocity, 0.5);
 	nh.param<double>("mean_driving_distance_from_rows", pd.mean_driving_distance_from_rows, 0.35);
@@ -309,12 +365,14 @@ int main(int argc, char** argv){
 	ros::Subscriber wheel_subscriber = n.subscribe<fmMsgs::float_data>(wheel_topic.c_str(), 10, &PotDecision::wheelCallback, &pd);
 	ros::Subscriber gyro_subscriber = n.subscribe<fmMsgs::gyroscope>(gyro_topic.c_str(), 10, &PotDecision::gyroCallback, &pd);
 	ros::Subscriber object_subscriber = n.subscribe<fmMsgs::detected_objects>(object_topic.c_str(), 10, &PotDecision::objectCallback, &pd);
+	ros::Subscriber object_row_subscriber = n.subscribe<fmMsgs::object_row>(object_row_topic.c_str(), 10, &PotDecision::objectRowCallback, &pd);
 
 	pd.twist_pub = n.advertise<geometry_msgs::TwistStamped>(twist_topic.c_str(), 1);
 	
 	ros::Timer timer = n.createTimer(ros::Duration(pd.time_s), &PotDecision::timerCallback, &pd);
 
 	pd.cte_pid(pd.cte_kp, pd.cte_ki, pd.cte_kd);
+	
 	
 	// Spin
 	ros::spin();

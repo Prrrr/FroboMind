@@ -34,6 +34,9 @@ SimpleObjectAvoidance::SimpleObjectAvoidance() {
 	
 	// Init messages
 	object_row_msg.size = row_box_count;
+	object_row_msg.resolution = row_box_height / row_box_count;
+	object_row_msg.row_start_position = row_box_start_value;
+	
 	
 	// Create images
 	raw_img = cvCreateImage(cvSize(600, 600), 8, 3);

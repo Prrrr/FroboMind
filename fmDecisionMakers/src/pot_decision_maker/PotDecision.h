@@ -15,12 +15,15 @@
 #include "geometry_msgs/TwistStamped.h"
 #include "math.h"
 #include "pid.h"
+#include "fmMsgs/object_row.h"
+#include "vector"
 	 
 using namespace std;
 class PotDecision {
 private:
 	// New Data flags
-	int new_speeds, new_gyro, new_l_row, new_r_row;
+	// Remember to initialize to zero in the constructor
+	int new_speeds, new_gyro, new_l_row, new_r_row, new_object_row, new_object_message_received;
 	
 	double wheel_speed_right, wheel_speed_left;
 	double gyro_z;
@@ -33,11 +36,20 @@ private:
 	double cross_track_error;
 	
 	// Object data
-	int new_object_message_received, new_left_object, new_right_object, new_stop;
+	int new_left_object, new_right_object, new_stop;
 	double object_left_distance, object_right_distance, object_left_angle, object_right_angle;
 	
 	// msgs
 	geometry_msgs::TwistStamped twist_msg;
+	
+	// Object Row Data
+	vector<int> object_row_left;
+	vector<int> object_row_right;
+	double object_row_resolution;
+	double object_row_start_position;
+	double object_row_end_position_left;
+	double object_row_end_position_right;
+	
 public:
 	PotDecision();
 	virtual ~PotDecision();
@@ -51,12 +63,14 @@ public:
 
 	// Functions
 	void rowCallback(const fmMsgs::row::ConstPtr& row);
+	void objectRowCallback(const fmMsgs::object_row::ConstPtr& row);
 	void wheelCallback(const fmMsgs::float_data::ConstPtr& speeds);
 	void gyroCallback(const fmMsgs::gyroscope::ConstPtr& gyro);
 	void objectCallback(const fmMsgs::detected_objects::ConstPtr& objects);
 	void timerCallback(const ros::TimerEvent& event);
 	void calculate_odometry();
 	void calculate_twist();
+	void extract_object_row_data();
 
 	// Publisher
 	ros::Publisher twist_pub;
