@@ -38,7 +38,7 @@ class row_localizer:
         self.new_row_left = 0
         
         # Weight between encoder and gyro 
-        self.angle_gain = 0.2
+        self.angle_gain = 0
         # KALMAN
         self.F = matrix.matrix([[1., self.dt*(1 - self.angle_gain), self.dt*self.angle_gain], [0., 1., 0.], [0., 0., 1.]]) # next state function
         self.kx = matrix.matrix([[0.], [0.], [0.]]) # initial state (location and velocity)
@@ -135,14 +135,29 @@ class row_localizer:
         self.y = y
         #self.th = O
         
+        # Transform etc
+        br = tf.TransformBroadcaster()
+        quat = tf.transformations.quaternion_from_euler(0,0,O)
+        odom_trans = TransformStamped()
+        odom_trans.header.stamp = rospy.Time.now()
+        odom_trans.header.frame_id = "base"
+        odom_trans.child_frame_id = "map"
+        odom_trans.transform.translation.x = x;
+        odom_trans.transform.translation.y = y;
+        odom_trans.transform.translation.z = 0.0;
+        odom_trans.transform.rotation = quat;
+        #tf.TransformBroadcaster().SendTransform(R,t,time,child,parent)
+        br.sendTransform((x,y,0.0), quat, odom_trans.header.stamp, odom_trans.child_frame_id, odom_trans.header.frame_id)
+        
         # Publish Odom msg
         odom_msg = Odometry()
-        #odom_msg.header.stamp = rospy.get_time()
-        odom_msg.header.frame_id = "map"
+        odom_msg.header.stamp = rospy.Time.now()
+        odom_msg.header.frame_id = "base"
+        odom_msg.child_frame_id = "map"
         odom_msg.pose.pose.position.x = x
         odom_msg.pose.pose.position.y = y
         odom_msg.pose.pose.position.z = 0.0
-        quat = tf.transformations.quaternion_from_euler(0,0,O)
+        
         odom_msg.pose.pose.orientation.x = quat[0]
         odom_msg.pose.pose.orientation.y = quat[1]
         odom_msg.pose.pose.orientation.z = quat[2]
@@ -181,4 +196,6 @@ class row_localizer:
 
 # Main loop
 if __name__ == '__main__':
-    row_localizer();
+    try:
+        row_localizer();
+    except rospy.ROSInterruptException: pass
