@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<launch>
+<!--	<node pkg="tf" type="static_transform_publisher" name="static_laser_link_tf" args="x y z yaw pitch roll frame_id child_frame_id period_in_ms"> -->
+	<node pkg="tf" type="static_transform_publisher" name="static_laser_link_tf" args="0.1 0 0 0 0 0 odom map 100" /> 
+
+	<rosparam>use_sim_time: true</rosparam>
+	
+	<node pkg="rviz" type="rviz" name="rviz" args="-d /home/ege/ros_work/rviz/display_config" />
+	<node pkg="fmProcessors" type="row_localizer.py" name="localization_node" output="screen">
+		<param name="row_topic" value="/lrs/row_topic"/>
+		<param name="gyro_topic" value="/fmSensors/Gyroscope"/>
+		<param name="odom_topic" value="/base_odom"/>
+		<param name="dt" value="0.02"/>
+		<param name="frame_id" value="base"/>
+		<param name="child_frame_id" value="odom"/>
+	</node>
+	<node pkg="rosbag" type="play" name="playback_data" args="/home/ege/ros_work/bags/19April/auto.bag --clock" output="screen"/>
+
+</launch>

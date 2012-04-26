@@ -12,13 +12,33 @@ import matrix
 class row_localizer:
     """The row Localizer"""
     def  __init__(self):
+        # ROS
+        rospy.init_node('row_localizer')
+        wheel_speed_topic = rospy.get_param('~wheel_speed_topic', "/Hilde/wheel_speed_topic")
+        row_topic = rospy.get_param('~row_topic', "/lrs/row_topic")
+        gyro_topic = rospy.get_param('~gyro_topic', "/fmSensors/Gyroscope")
+        odom_topic = rospy.get_param('~odom_topic', "/base_odom")
+        
+        self.frame_id = rospy.get_param('~frame_id', "base")
+        self.child_frame_id = rospy.get_param('~child_frame_id', "map")
+        self.dt = float(rospy.get_param('~dt', 0.02))
+        rospy.loginfo("child: %s"%self.child_frame_id)
+        rospy.loginfo("frame: %s"%self.frame_id)
+        
+        rospy.Subscriber(wheel_speed_topic, float_data, self.wheel_speed_callback)
+        rospy.Subscriber(row_topic, row, self.row_callback)
+        rospy.Subscriber(gyro_topic, gyroscope, self.gyro_callback)
+        
+        self.odom_pub = rospy.Publisher(odom_topic, Odometry)
+        
+        rospy.Timer(rospy.rostime.Duration(self.dt), self.timer_callback)
+        
         # initialize global variables
         
         self.x = 0                  # state variables
         self.y = 0
         self.th = 0
         
-        self.dt = 0.02              # discrete time step
         self.b = (2 * 0.185)        # Distance between wheels
         self.threshold = 0.0001     # threshold value for angle calculation 
         
@@ -47,16 +67,8 @@ class row_localizer:
         self.R = matrix.matrix([[0.5, 0., 0.], [0., 0.5, 0.], [0., 0., 0.5]]) # measurement uncertainty
         self.I = matrix.matrix([[1., 0., 0.], [0., 1., 0], [0., 0., 1]]) # identity matrix
 
-         
-        rospy.init_node('row_localizer')
-        rospy.loginfo("Localizing is on")
-        rospy.Subscriber("/Hilde/wheel_speed_topic", float_data, self.wheel_speed_callback)
-        rospy.Subscriber("/lrs/row_topic", row, self.row_callback)
-        rospy.Subscriber("/fmSensors/Gyroscope", gyroscope, self.gyro_callback)
-        
-        self.odom_pub = rospy.Publisher("/base_odom", Odometry)
-        
-        rospy.Timer(rospy.rostime.Duration(self.dt), self.timer_callback)
+        rospy.loginfo("Localization is on")
+        # ROS
         rospy.spin()
         
     def gyro_callback(self, gyro):
@@ -85,7 +97,6 @@ class row_localizer:
         #rospy.loginfo("Wheel callback")
     
     def timer_callback(self, event):
-        
         # if new values are detected
         if self.new_gyro == 1 and self.new_speeds == 1:
             wt = (self.vr - self.vl)/self.b        # Angular velocity from encoders    - 50 Hz
@@ -140,8 +151,8 @@ class row_localizer:
         quat = tf.transformations.quaternion_from_euler(0,0,O)
         odom_trans = TransformStamped()
         odom_trans.header.stamp = rospy.Time.now()
-        odom_trans.header.frame_id = "base"
-        odom_trans.child_frame_id = "map"
+        odom_trans.header.frame_id = self.frame_id
+        odom_trans.child_frame_id = self.child_frame_id
         odom_trans.transform.translation.x = x;
         odom_trans.transform.translation.y = y;
         odom_trans.transform.translation.z = 0.0;
@@ -152,8 +163,8 @@ class row_localizer:
         # Publish Odom msg
         odom_msg = Odometry()
         odom_msg.header.stamp = rospy.Time.now()
-        odom_msg.header.frame_id = "base"
-        odom_msg.child_frame_id = "map"
+        odom_msg.header.frame_id = self.frame_id
+        odom_msg.child_frame_id = self.child_frame_id
         odom_msg.pose.pose.position.x = x
         odom_msg.pose.pose.position.y = y
         odom_msg.pose.pose.position.z = 0.0
