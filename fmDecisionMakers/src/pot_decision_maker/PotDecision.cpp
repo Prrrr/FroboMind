@@ -97,7 +97,8 @@ void PotDecision::run_state_machine() {
 		case STM_TURNING:
 			twist_msg.twist.linear.x = linear_mean_velocity;
 			twist_msg.twist.angular.z = dead_reckoning_turn_rate;
-		
+			publish_twist = 1;
+			
 			if(row_state != RST_NO_ROW)
 			{
 				state = STM_DRIVE;

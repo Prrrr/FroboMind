@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 <!--	<node pkg="tf" type="static_transform_publisher" name="static_laser_link_tf" args="x y z yaw pitch roll frame_id child_frame_id period_in_ms"> -->
-	<node pkg="tf" type="static_transform_publisher" name="static_laser_link_tf" args="0.1 0 0 0 0 0 odom base_laser 100">
+	<node pkg="tf" type="static_transform_publisher" name="static_laser_link_tf" args="0.1 0 0 0 0 0 odom base_laser 100" />
 	<group ns="Navigation">
 		<node pkg="fmDecisionMakers" name="pot_decision" type="pot_decision" output="screen">
 			<param name="row_topic" value="/lrs/row_topic"/>
@@ -21,10 +21,8 @@
 			<param name="cte_kd" value="0" type="double"/>
 			<param name="object_row_box_filled_threshold" value="0" type="int"/>
 			<param name="object_row_threshold" value="0.5" type="double"/>
-			<param name="dead_reckoning_turn_rate" value="0.5" type="double"/>
+			<param name="dead_reckoning_turn_rate" value="1.5" type="double"/>
 		</node>
-	</group>
-
 	</group>
 	
 
@@ -40,7 +38,7 @@
 			<param name="laser_scan_topic" value="laser_msgs_1" />
 			<param name="object_topic" value="object_topic" />
 			<param name="object_row_topic" value="object_row_topic" />
-			<param name="show_image" value="1" />
+			<param name="show_image" value="0" />
 			<param name="robot_clearence_width" value="0.26" />
 			<param name="robot_stop_zone" value="0.2" />
 			<param name="robot_turn_zone" value="0.3" />
@@ -50,8 +48,6 @@
 			<param name="row_box_width" value="0.30" />
 			<param name="row_box_height" value="1" />
 			<param name="row_box_count" value="10" />
-		</node>
-
 		</node>
 		
 		<node pkg="fmSensors" name="lms111_front" type="lms111_node">
