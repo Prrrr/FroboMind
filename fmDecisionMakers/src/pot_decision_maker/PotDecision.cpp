@@ -95,8 +95,7 @@ void PotDecision::run_state_machine() {
 			break;
 		
 		case STM_TURNING:
-			twist_msg.twist.angular.z = dead_reckoning_turn_rate;
-			
+					
 			// To avoid crashing into ponies.
 			if(new_object_message_received)
 			{
@@ -104,6 +103,9 @@ void PotDecision::run_state_machine() {
 				calculate_twist_from_object_boxes();
 				publish_twist = 1;
 			}
+			
+			twist_msg.twist.angular.z = abs(twist_msg.twist.angular.z);
+			twist_msg.twist.angular.z += dead_reckoning_turn_rate;
 			
 			if(row_state != RST_NO_ROW)
 			{
