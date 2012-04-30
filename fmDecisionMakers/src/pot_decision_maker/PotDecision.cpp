@@ -95,9 +95,15 @@ void PotDecision::run_state_machine() {
 			break;
 		
 		case STM_TURNING:
-			twist_msg.twist.linear.x = linear_mean_velocity;
 			twist_msg.twist.angular.z = dead_reckoning_turn_rate;
-			publish_twist = 1;
+			
+			// To avoid crashing into ponies.
+			if(new_object_message_received)
+			{
+				new_object_message_received = 0;
+				calculate_twist_from_object_boxes();
+				publish_twist = 1;
+			}
 			
 			if(row_state != RST_NO_ROW)
 			{
@@ -119,6 +125,14 @@ void PotDecision::run_state_machine() {
 			ROS_WARN("State: Default");
 			break;
 	}
+	
+	if (new_stop) {
+		twist_msg.twist.linear.x = 0;
+		twist_msg.twist.angular.z = 0;
+		publish_twist = 1;
+		new_stop = 0;
+	}
+	
 	
 	if(publish_twist)
 	{
@@ -319,17 +333,8 @@ void PotDecision::calculate_twist_from_object_boxes() {
 	//ROS_INFO("\t%f\t%f\t%f\t%f\t%f\t%f", x, y, th, idt, wticks, wgyro);
 	// Build twist
 	twist_msg.twist.linear.x = linear_mean_velocity;
-	twist_msg.twist.angular.z = cross_track_error;
+	twist_msg.twist.angular.z += cross_track_error;
 	
-	
-	
-	if (new_stop) {
-		twist_msg.twist.linear.x = 0;
-		twist_msg.twist.angular.z = 0;
-	}
-	
-	
-	new_stop = 0;
 	new_left_object = 0;
 	new_right_object = 0;
 }
