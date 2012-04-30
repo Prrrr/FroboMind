@@ -69,6 +69,7 @@ public:
 	double cte_kp, cte_ki, cte_kd;
 	int object_row_box_filled_threshold;
 	double object_row_threshold;
+	double dead_reckoning_turn_rate;
 
 	// Functions
 	void rowCallback(const fmMsgs::row::ConstPtr& row);

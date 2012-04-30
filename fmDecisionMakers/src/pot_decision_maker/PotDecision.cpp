@@ -95,6 +95,9 @@ void PotDecision::run_state_machine() {
 			break;
 		
 		case STM_TURNING:
+			twist_msg.twist.linear.x = linear_mean_velocity;
+			twist_msg.twist.angular.z = dead_reckoning_turn_rate;
+		
 			if(row_state != RST_NO_ROW)
 			{
 				state = STM_DRIVE;
@@ -489,6 +492,7 @@ int main(int argc, char** argv){
 	nh.param<double>("cte_kd", pd.cte_kd, 0);
 	nh.param<int>("object_row_box_filled_threshold", pd.object_row_box_filled_threshold, 0);
 	nh.param<double>("object_row_threshold", pd.object_row_threshold, 0.5);
+	nh.param<double>("dead_reckoning_turn_rate", pd.dead_reckoning_turn_rate, 0.5);
 
 	//nh.param<double>("max_dist_to_rows", pd.max_dist_to_rows, 0.6);
 	//nh.param<int>("show_image", pd.show_image_boolean, 1);
