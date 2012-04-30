@@ -12,11 +12,13 @@
 #include "fmMsgs/float_data.h"
 #include "fmMsgs/gyroscope.h"
 #include "fmMsgs/detected_objects.h"
+#include "fmMsgs/hilde_states.h"
 #include "geometry_msgs/TwistStamped.h"
 #include "math.h"
 #include "pid.h"
 #include "fmMsgs/object_row.h"
 #include "vector"
+	
 	 
 using namespace std;
 class PotDecision {
@@ -41,6 +43,7 @@ private:
 	
 	// msgs
 	geometry_msgs::TwistStamped twist_msg;
+	fmMsgs::hilde_states row_state_msg;
 	
 	// Object Row Data
 	vector<int> object_row_left;
@@ -49,6 +52,10 @@ private:
 	double object_row_start_position;
 	double object_row_end_position_left;
 	double object_row_end_position_right;
+	double object_row_fill_percent_left;
+	double object_row_fill_percent_right;
+	ros::Time object_row_data_last_update;
+	int row_state;
 	
 public:
 	PotDecision();
@@ -60,6 +67,8 @@ public:
 	double base_link_radius_to_wheels;
 	double time_s;
 	double cte_kp, cte_ki, cte_kd;
+	int object_row_box_filled_threshold;
+	double object_row_threshold;
 
 	// Functions
 	void rowCallback(const fmMsgs::row::ConstPtr& row);
@@ -69,11 +78,13 @@ public:
 	void objectCallback(const fmMsgs::detected_objects::ConstPtr& objects);
 	void timerCallback(const ros::TimerEvent& event);
 	void calculate_odometry();
-	void calculate_twist();
+	void calculate_twist_from_object_boxes();
 	void extract_object_row_data();
+	void run_state_machine();
 
 	// Publisher
 	ros::Publisher twist_pub;
+	ros::Publisher row_state_pub;
 	
 	// PID
 	PID cte_pid; 
