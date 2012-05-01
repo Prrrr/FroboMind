@@ -108,21 +108,45 @@ void PotDecision::run_state_machine() {
 				left_row_counter++;
 			}
 			
+			
+			
+			
 			// Detect ending row
-			if(object_row_end_position_right <= 0)
-			{
+			// if(object_row_end_position_right <= 0 || object_row_end_position_left <= 0)
+			// 			{
 				// Decide which way to turn
 				if(right_row_counter > left_row_counter && right_row_counter > between_row_counter) {
-					next_turn_direction = RIGHT;
-					ROS_INFO("Going right");
+					twist_msg.twist.angular.z += 0.2;
+					if(object_row_end_position_right <= 0) {
+						next_turn_direction = RIGHT;
+						ROS_INFO("Going right");
+						state = STM_TURNING;
+						ROS_WARN("State: Turning");
+					}
 				} else if (left_row_counter > right_row_counter && left_row_counter > between_row_counter) {
-					next_turn_direction = LEFT;
-					ROS_INFO("Going left");
+					twist_msg.twist.angular.z -= 0.2;
+					if(object_row_end_position_left <= 0) {
+						next_turn_direction = LEFT;
+						ROS_INFO("Going left");
+						state = STM_TURNING;
+						ROS_WARN("State: Turning");
+					}
+				} else {
+					if (next_turn_direction == RIGHT) {
+						if(object_row_end_position_right <= 0) {
+							ROS_INFO("Going right");
+							state = STM_TURNING;
+							ROS_WARN("State: Turning");
+						}
+					} else {
+						if(object_row_end_position_left <= 0) {
+							ROS_INFO("Going left");
+							state = STM_TURNING;
+							ROS_WARN("State: Turning");
+						}
+					}
 				}
-				
-				state = STM_TURNING;
-				ROS_WARN("State: Turning");
-			}
+			// }
 			break;
 		
 		case STM_TURNING:
@@ -151,6 +175,9 @@ void PotDecision::run_state_machine() {
 				
 				state = STM_DRIVE;
 				ROS_WARN("State: Drive");
+				between_row_counter = 0;
+				right_row_counter = 0;
+				left_row_counter = 0;
 			}
 			break;
 		
