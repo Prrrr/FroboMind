@@ -114,8 +114,10 @@ void PotDecision::run_state_machine() {
 				// Decide which way to turn
 				if(right_row_counter > left_row_counter && right_row_counter > between_row_counter) {
 					next_turn_direction = RIGHT;
+					ROS_INFO("Going right");
 				} else if (left_row_counter > right_row_counter && left_row_counter > between_row_counter) {
 					next_turn_direction = LEFT;
+					ROS_INFO("Going left");
 				}
 				
 				state = STM_TURNING;
