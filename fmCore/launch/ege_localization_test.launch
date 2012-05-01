@@ -11,7 +11,7 @@
 		<param name="gyro_topic" value="/fmSensors/Gyroscope"/>
 		<param name="odom_topic" value="/base_odom"/>
 		<param name="dt" value="0.02"/>
-		<param name="frame_id" value="base"/>
+		<param name="frame_id" value="world"/>
 		<param name="child_frame_id" value="odom"/>
 	</node>
 	<node pkg="rosbag" type="play" name="playback_data" args="/home/ege/ros_work/bags/19April/auto.bag --clock" output="screen"/>
