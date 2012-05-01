@@ -36,6 +36,7 @@ private:
 	
 	// Navigation data
 	double cross_track_error;
+	int next_turn_direction;
 	
 	// Object data
 	int new_left_object, new_right_object, new_stop;

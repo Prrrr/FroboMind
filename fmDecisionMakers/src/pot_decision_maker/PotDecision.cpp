@@ -25,6 +25,11 @@ using namespace std;
 		RST_LEFT_ROW,
 		RST_NO_ROW
 	 };
+	 
+	 enum {
+		 RIGHT,
+		 LEFT
+	 };
 /*
  * Constructor
  */
@@ -43,7 +48,11 @@ PotDecision::PotDecision() {
 	object_row_end_position_left = 1000;
     object_row_end_position_right = 1000;
 	row_state = RST_NO_ROW;
+	
+	// Navigation
+	next_turn_direction = RIGHT;
 }
+
 /*
  * Destructor
  */
@@ -54,6 +63,7 @@ PotDecision::~PotDecision() {
 void PotDecision::run_state_machine() {
 	static int state = STM_START;
 	int publish_twist = 0;
+	static int between_row_counter = 0, right_row_counter = 0, left_row_counter = 0;
 	
 	// Build twist
 	++twist_msg.header.seq;
@@ -68,6 +78,9 @@ void PotDecision::run_state_machine() {
 			{
 				state = STM_DRIVE;
 				ROS_WARN("State: Drive");
+				between_row_counter = 0;
+				right_row_counter = 0;
+				left_row_counter = 0;
 			}
 			break;
 			
@@ -86,9 +99,25 @@ void PotDecision::run_state_machine() {
 			row_state_msg.state = row_state;
 			row_state_pub.publish(row_state_msg);
 			
+			// Increment counters
+			if(row_state == RST_BETWEEN_ROWS) {
+				between_row_counter++;
+			} else if(row_state == RST_RIGHT_ROW) {
+				right_row_counter++;
+			} else if(row_state == RST_LEFT_ROW) {
+				left_row_counter++;
+			}
+			
 			// Detect ending row
 			if(object_row_end_position_right <= 0)
 			{
+				// Decide which way to turn
+				if(right_row_counter > left_row_counter && right_row_counter > between_row_counter) {
+					next_turn_direction = RIGHT;
+				} else if (left_row_counter > right_row_counter && left_row_counter > between_row_counter) {
+					next_turn_direction = LEFT;
+				}
+				
 				state = STM_TURNING;
 				ROS_WARN("State: Turning");
 			}
@@ -107,8 +136,17 @@ void PotDecision::run_state_machine() {
 			twist_msg.twist.angular.z = abs(twist_msg.twist.angular.z);
 			twist_msg.twist.angular.z += dead_reckoning_turn_rate;
 			
+			// FLip the sign if we need to go left
+			if(next_turn_direction == LEFT)
+			{
+				twist_msg.twist.angular.z = -twist_msg.twist.angular.z;
+			}
+			
 			if(row_state != RST_NO_ROW)
 			{
+				// Turn the other way next time
+				next_turn_direction = (next_turn_direction == RIGHT) ? LEFT : RIGHT;
+				
 				state = STM_DRIVE;
 				ROS_WARN("State: Drive");
 			}
