@@ -12,7 +12,7 @@
 			<param name="object_row_topic" value="/lrs/object_row_topic"/>
 			<param name="row_state_topic" value="/nav/row_state_topic"/>
 			<param name="time_s" value="0.02" type="double"/>
-			<param name="linear_mean_velocity" value="0.5" type="double"/>
+			<param name="linear_mean_velocity" value="0.9" type="double"/>
 			<param name="mean_driving_distance_from_rows" value="0.35" type="double"/>
 			<param name="cte_weight_angle" value="1.0" type="double"/>
 			<param name="cte_weight_distance" value="0.0" type="double"/>

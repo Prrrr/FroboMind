@@ -64,6 +64,7 @@ void PotDecision::run_state_machine() {
 	static int state = STM_START;
 	int publish_twist = 0;
 	static int between_row_counter = 0, right_row_counter = 0, left_row_counter = 0;
+	double speed_factor = 0;
 	
 	// Build twist
 	++twist_msg.header.seq;
@@ -102,51 +103,57 @@ void PotDecision::run_state_machine() {
 			// Increment counters
 			if(row_state == RST_BETWEEN_ROWS) {
 				between_row_counter++;
+				speed_factor = (object_row_fill_percent_left + object_row_fill_percent_right) / 2;
 			} else if(row_state == RST_RIGHT_ROW) {
 				right_row_counter++;
+				speed_factor = object_row_fill_percent_right;
 			} else if(row_state == RST_LEFT_ROW) {
 				left_row_counter++;
+				speed_factor = object_row_fill_percent_left;
 			}
 			
+			// Clamp speed factor
+			if(speed_factor > 0.9)
+			{
+				speed_factor = 0.9;
+			} else if (speed_factor < 0.5) {
+				speed_factor = 0.5;
+			}
 			
-			
+			twist_msg.twist.linear.x = speed_factor * linear_mean_velocity;
 			
 			// Detect ending row
-			// if(object_row_end_position_right <= 0 || object_row_end_position_left <= 0)
-			// 			{
-				// Decide which way to turn
-				if(right_row_counter > left_row_counter && right_row_counter > between_row_counter) {
-					twist_msg.twist.angular.z += 0.2;
+			if(right_row_counter > left_row_counter && right_row_counter > between_row_counter) {
+				twist_msg.twist.angular.z += 0.2;
+				if(object_row_end_position_right <= 0) {
+					next_turn_direction = RIGHT;
+					ROS_INFO("Going right");
+					state = STM_TURNING;
+					ROS_WARN("State: Turning");
+				}
+			} else if (left_row_counter > right_row_counter && left_row_counter > between_row_counter) {
+				twist_msg.twist.angular.z -= 0.2;
+				if(object_row_end_position_left <= 0) {
+					next_turn_direction = LEFT;
+					ROS_INFO("Going left");
+					state = STM_TURNING;
+					ROS_WARN("State: Turning");
+				}
+			} else {
+				if (next_turn_direction == RIGHT) {
 					if(object_row_end_position_right <= 0) {
-						next_turn_direction = RIGHT;
 						ROS_INFO("Going right");
 						state = STM_TURNING;
 						ROS_WARN("State: Turning");
 					}
-				} else if (left_row_counter > right_row_counter && left_row_counter > between_row_counter) {
-					twist_msg.twist.angular.z -= 0.2;
+				} else {
 					if(object_row_end_position_left <= 0) {
-						next_turn_direction = LEFT;
 						ROS_INFO("Going left");
 						state = STM_TURNING;
 						ROS_WARN("State: Turning");
 					}
-				} else {
-					if (next_turn_direction == RIGHT) {
-						if(object_row_end_position_right <= 0) {
-							ROS_INFO("Going right");
-							state = STM_TURNING;
-							ROS_WARN("State: Turning");
-						}
-					} else {
-						if(object_row_end_position_left <= 0) {
-							ROS_INFO("Going left");
-							state = STM_TURNING;
-							ROS_WARN("State: Turning");
-						}
-					}
 				}
-			// }
+			}
 			break;
 		
 		case STM_TURNING:
@@ -161,6 +168,7 @@ void PotDecision::run_state_machine() {
 			
 			twist_msg.twist.angular.z = abs(twist_msg.twist.angular.z);
 			twist_msg.twist.angular.z += dead_reckoning_turn_rate;
+			twist_msg.twist.linear.x = 0.5;
 			
 			// FLip the sign if we need to go left
 			if(next_turn_direction == LEFT)
