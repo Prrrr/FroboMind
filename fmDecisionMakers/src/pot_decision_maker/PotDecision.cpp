@@ -113,9 +113,9 @@ void PotDecision::run_state_machine() {
 			}
 			
 			// Clamp speed factor
-			if(speed_factor > 0.9)
+			if(speed_factor > 1)
 			{
-				speed_factor = 0.9;
+				speed_factor = 1;
 			} else if (speed_factor < 0.5) {
 				speed_factor = 0.5;
 			}
