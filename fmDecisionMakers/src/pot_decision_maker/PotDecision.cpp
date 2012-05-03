@@ -347,12 +347,6 @@ void PotDecision::timerCallback(const ros::TimerEvent& event) {
 		new_gyro = 0;
 	}
 	
-	// if(new_object_message_received)
-	// {
-	// 	new_object_message_received = 0;
-	// 	calculate_twist();
-	// }
-	
 	if(new_object_row)
 	{
 		new_object_row = 0;
@@ -363,12 +357,11 @@ void PotDecision::timerCallback(const ros::TimerEvent& event) {
 }
 
 void PotDecision::calculate_twist_from_object_boxes() {
-	//ROS_INFO("Timerz!");
 	static double dt = time_s;
 	cross_track_error = 0;
 	double dist_cte = 0, ang_cte = 0;
 	
-	// Start driving decisio
+	// Start driving decision
 	if (new_left_object || new_right_object) {
 		if(new_left_object && new_right_object)
 		{
@@ -382,11 +375,7 @@ void PotDecision::calculate_twist_from_object_boxes() {
 			ang_cte 	= object_right_angle;
 		}
 		
-		// dist_cte = 1 / dist_cte;
-		// ang_cte = 1 / ang_cte;
-		
 		dist_cte = (ang_cte > 0) ? -dist_cte : dist_cte;
-		//cross_track_error = ((-1 / ang_cte) * (1/(dist_cte * dist_cte)) / 100); 
 		cross_track_error = ((-1 / ang_cte) * (1/(dist_cte * dist_cte)) / cte_weight_distance); 
 		
 	} else {
@@ -401,15 +390,10 @@ void PotDecision::calculate_twist_from_object_boxes() {
 		cross_track_error = (cross_track_error < 0) ? -M_PI / 4 : M_PI / 4;
 	}
 	
-	//cross_track_error = dist_cte * cte_weight_distance - ang_cte * cte_weight_angle;
-	
 	double cte_t = cross_track_error;
 	cross_track_error = cte_pid.run(cross_track_error, dt);
-	//ROS_INFO("PIDet: %f, NonPIDet: %f", cross_track_error, cte_t);
 	
-	//ROS_INFO("\t%f\t%f\t%f\t%f\t%f\t%f", x, y, th, idt, wticks, wgyro);
 	// Build twist
-	twist_msg.twist.linear.x = linear_mean_velocity;
 	twist_msg.twist.angular.z += cross_track_error;
 	
 	new_left_object = 0;
