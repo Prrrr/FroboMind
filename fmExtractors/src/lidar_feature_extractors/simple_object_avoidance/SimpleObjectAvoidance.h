@@ -14,6 +14,7 @@
 #include "laser_geometry/laser_geometry.h"
 #include "fmMsgs/detected_objects.h"
 #include "fmMsgs/object_row.h"
+#include "fmMsgs/float_data.h"
 
 // OpenCv includes
 #include <cv_bridge/cv_bridge.h>
@@ -39,13 +40,14 @@ private:
 	ros::Subscriber laser_subscriber;
 	ros::Publisher object_publisher;
 	ros::Publisher object_row_publisher;
+	ros::Subscriber wheel_speeds_subscriber;
 	
 	// msgs
 	fmMsgs::detected_objects object_msg;
 	fmMsgs::object_row object_row_msg;
 	
 	// Parameters
-	string laser_scan_topic, object_topic, object_row_topic;
+	string laser_scan_topic, object_topic, object_row_topic, wheel_speeds_topic;
 	int show_image;
 	double robot_clearence_width, robot_stop_zone, robot_turn_zone, robot_turn_zone_extra_width;
 	
@@ -55,6 +57,11 @@ private:
 	
 	// Callbacks
 	void laserScanCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan);
+	void wheelCallback(const fmMsgs::float_data::ConstPtr& speeds);
+	
+	// Wheel speeds
+	int new_speeds;
+	double wheel_speed_right, wheel_speed_left;
 	
 	// Detected rows
 	// vector<int> left_row;

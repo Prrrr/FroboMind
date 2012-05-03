@@ -20,6 +20,7 @@ SimpleObjectAvoidance::SimpleObjectAvoidance() {
 	nh.param<double>("robot_turn_zone_extra_width", robot_turn_zone_extra_width, 0.05);
 	nh.param<string>("object_topic", object_topic, "object_topic");
 	nh.param<string>("object_row_topic", object_row_topic, "object_row_topic");
+	nh.param<string>("wheel_speeds_topic", wheel_speeds_topic, "wheel_speeds_topic");
 
 	// For row boxes
 	nh.param<double>("row_box_start_value", row_box_start_value, -0.2);
@@ -31,6 +32,7 @@ SimpleObjectAvoidance::SimpleObjectAvoidance() {
 	laser_subscriber = n.subscribe<sensor_msgs::LaserScan>(laser_scan_topic.c_str(), 1, &SimpleObjectAvoidance::laserScanCallback, this);
 	object_publisher = n.advertise<fmMsgs::detected_objects>(object_topic.c_str(), 1);
 	object_row_publisher = n.advertise<fmMsgs::object_row>(object_row_topic.c_str(), 1);
+	wheel_speeds_subscriber = n.subscribe<fmMsgs::float_data>(wheel_speeds_topic.c_str(), 1, &SimpleObjectAvoidance::wheelCallback, this);
 	
 	// Init messages
 	object_row_msg.size = row_box_count;
@@ -64,6 +66,13 @@ SimpleObjectAvoidance::~SimpleObjectAvoidance() {
 		cvDestroyWindow(framedWindowName);
 	}
 }
+
+void SimpleObjectAvoidance::wheelCallback(const fmMsgs::float_data::ConstPtr& speeds) {
+	new_speeds = 1;
+	wheel_speed_right = speeds->data[0];
+	wheel_speed_left = speeds->data[1];
+}
+
 
 void SimpleObjectAvoidance::laserScanCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan){
 	//ROS_INFO("Laser Scan Callback");

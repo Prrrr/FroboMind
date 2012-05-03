@@ -38,6 +38,7 @@
 			<param name="laser_scan_topic" value="laser_msgs_1" />
 			<param name="object_topic" value="object_topic" />
 			<param name="object_row_topic" value="object_row_topic" />
+			<param name="wheel_speeds_topic" value="/Hilde/wheel_speed_topic" />
 			<param name="show_image" value="0" />
 			<param name="robot_clearence_width" value="0.26" />
 			<param name="robot_stop_zone" value="0.2" />
