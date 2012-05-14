@@ -94,12 +94,6 @@ void PotDecision::run_state_machine() {
 				publish_twist = 1;
 			}
 			
-			// Publish row state
-			++row_state_msg.header.seq;
-			row_state_msg.header.stamp = ros::Time::now();
-			row_state_msg.state = row_state;
-			row_state_pub.publish(row_state_msg);
-			
 			// Increment counters
 			if(row_state == RST_BETWEEN_ROWS) {
 				between_row_counter++;
@@ -217,6 +211,13 @@ void PotDecision::run_state_machine() {
 		publish_twist = 0;
 	}
 	
+	// Publish state
+	++row_state_msg.header.seq;
+	row_state_msg.header.stamp = ros::Time::now();
+	row_state_msg.row_state = row_state;
+	row_state_msg.state = state;
+	row_state_msg.next_turn_direction = next_turn_direction;
+	row_state_pub.publish(row_state_msg);
 }
 
 
