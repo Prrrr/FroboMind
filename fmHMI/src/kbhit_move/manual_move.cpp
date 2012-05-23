@@ -225,7 +225,15 @@ void Kbhit::stop_robot(){
 }
 
 void Kbhit::send_raw_twist(char c){
-	if (c >= '0' || c <= '9'){
+	if (c == 'm'){
+		int number = 10;
+		ROS_WARN("WHAT?: %d", number);
+		++raw_twist_msg.header.seq;
+		raw_twist_msg.header.stamp = ros::Time::now();
+		raw_twist_msg.twist.angular.z = 0;	
+		raw_twist_msg.twist.linear.x = (double)number*0.1;
+		raw_twist_pub.publish(raw_twist_msg);
+	}else if (c >= '0' || c <= '9'){
 		int number = c - '0';
 		ROS_WARN("INT: %d", number);
 		++raw_twist_msg.header.seq;
@@ -260,6 +268,10 @@ void Kbhit::readKeys(){
 		/* handle keys */
 		switch (c)
 		{
+			case 'm':
+				ROS_ERROR("Monster Speed!");
+				send_raw_twist(c);
+				break;
 			case KEY_ESCAPE:
 				esc_key = true;
 				break;

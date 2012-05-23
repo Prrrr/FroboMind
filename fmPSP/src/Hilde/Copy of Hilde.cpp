@@ -13,7 +13,6 @@
 #include "boost/circular_buffer.hpp"
 #include <tf/transform_broadcaster.h>
 #include <nav_msgs/Odometry.h>
-#include "pid.h"
 	 
 using namespace std;
 class Hilde {
@@ -53,16 +52,12 @@ private:
 	void calculateMotorFromTwist(double linear_vel, double angular_vel);
 	double check_velocity(double vel);
 	void publish_odom(double lv, double rv);
-	void set_speeds(double left, double right);
 	
 
 	// Circular buffers for the encoders
 	boost::circular_buffer<int> left_encoder_ticks;
 	boost::circular_buffer<int> right_encoder_ticks;
-	// PID
-	double kp, ki, kd;
-	double desired_vl, desired_vr;
-	PID cte_pid;
+	
 	
 public:
 	Hilde();
@@ -103,19 +98,13 @@ Hilde::Hilde() {
 	local_n.param<std::string>("wheel_speed_topic", wheel_speed_topic, "wheel_speed_topic");
 	local_n.param<double>("wheel_radius", wheel_radius, 0.085);
 	local_n.param<double>("icr_radius_to_wheels", icr_radius_to_wheels, 0.185);
+	local_n.param<double>("max_velocity", max_velocity, 0.75);
 	local_n.param<int>("encoder_circular_buffer_size", encoder_circular_buffer_size, 10);
 	local_n.param<double>("encoder_dt", encoder_dt, 0.02);
 	local_n.param<double>("base_link_length_to_rear_wheel", base_link_length_to_rear_wheel, 0.28);
 	local_n.param<double>("base_link_radius_to_wheels", base_link_radius_to_wheels, 0.02);
 	local_n.param<double>("dead_reckoning_linearization_turn_rate_threshold", dead_reckoning_linearization_turn_rate_threshold, 0.01);
-	// PID
-	local_n.param<double>("kp", kp, 1);
-	local_n.param<double>("ki", ki, 0);
-	local_n.param<double>("kd", kd, 0);
-	local_n.param<double>("max_velocity", max_velocity, 0.55);
 	
-	cte_pid(kp,ki,kd);
-
 	// Subscribers and publisher
 	twist_subscriber = global_n.subscribe<geometry_msgs::TwistStamped>(twist_subscriber_topic.c_str(), 1, &Hilde::twistCallback,this);
 	robocard_subscriber = global_n.subscribe<fmMsgs::serial_bin>(robocard_subscriber_topic.c_str(), 5, &Hilde::serialCallback, this);
@@ -176,14 +165,8 @@ void Hilde::serialCallback(const fmMsgs::serial_bin::ConstPtr& msg){
 	wheel_speeds_msg.data.push_back(avell);
 	
 	wheelspeed_publisher.publish(wheel_speeds_msg);
+	
 	//ROS_INFO("Left/right: %f, %f", avell, avelr);
-	// RUN PID AND PUBLISH
-	double ct_error;
-	ct_error = desired_vl - avell;
-	avell = avell + cte_pid.run(ct_error, 0.02);
-	ct_error = desired_vr - avelr;
-	avelr = avelr + cte_pid.run(ct_error, 0.02);
-	set_speeds(avell, avelr);
 }
 
 // Published odometry-message
@@ -252,6 +235,13 @@ void Hilde::calculateMotorFromTwist(double linear_vel, double angular_vel){
 	// double check the velocities consistent with max_velocity
 	left_velocity = check_velocity(left_velocity);
 	right_velocity = check_velocity(right_velocity);
+	// Calculate velocity relative to 8-bits
+	double temp_output_left = left_velocity / max_velocity * 127;
+	double temp_output_right = right_velocity / max_velocity * 127;
+	output_left = (int) temp_output_left;
+	output_right = (int) temp_output_right;
+	
+	
 	
 	double temp_rear_wheel_angle = (atan2(w * base_link_length_to_rear_wheel, V) * 180) / M_PI;
 	
@@ -262,19 +252,7 @@ void Hilde::calculateMotorFromTwist(double linear_vel, double angular_vel){
 	//ROS_INFO("V: %f out: %f out_char %d, Rear wheel angle: %f, rear output: %i", V, temp_output_left, output_left, temp_rear_wheel_angle, out_rear);
 	
 	
-	// Set desired velocities
-	desired_vl = left_velocity;
-	desired_vr = right_velocity;
-	// Set the speeds
-	set_speeds(output_left, output_right);
-}
-void Hilde::set_speeds(double left, double right){
-	// Calculate velocity relative to 8-bits
-	double temp_output_left = left / max_velocity * 127;
-	double temp_output_right = right / max_velocity * 127;
-	int output_left = (int) temp_output_left;
-	int output_right = (int) temp_output_right;
-
+	
 	// Create protocol
 	protocol prot;
 	prot.length = 2;
@@ -293,8 +271,8 @@ void Hilde::set_speeds(double left, double right){
 	}
 	robocard_tx_msg.length = temp.size();
 	robocard_publisher.publish(robocard_tx_msg);
-}
 
+}
 Hilde::~Hilde() {
 
 }
