@@ -44,6 +44,11 @@ class Kbhit{
 	ros::Publisher twist_pub;
 	void twist_robot(double d_lin, double d_ang);
 	void twist_check(double& lin, double& ang);
+	// raw values
+	std::string raw_twist_topic;
+	ros::Publisher raw_twist_pub;
+	geometry_msgs::TwistStamped raw_twist_msg;
+	void send_raw_twist(char c);
 
  public:
 	int stop;
@@ -62,6 +67,7 @@ Kbhit::Kbhit(){
 	std::string kbhit_move_topic;
 	n.param<std::string>("topic", kbhit_move_topic, "kbhit__topic");
 	n.param<std::string>("twist_topic", twist_topic, "kbhit_twist_topic");
+	n.param<std::string>("raw_twist_topic", raw_twist_topic, "raw_twist_topic");
 	n.param<int>("max_speed", max_speed, 100);
 	n.param<int>("min_speed", min_speed, -100);
 	n.param<int>("turn_constant", turn_constant, 3);
@@ -69,6 +75,7 @@ Kbhit::Kbhit(){
 
 	move_pub = nh.advertise<fmMsgs::kbhit>(kbhit_move_topic.c_str(), 1000);
 	twist_pub = nh.advertise<geometry_msgs::TwistStamped>(twist_topic.c_str(), 1);
+	raw_twist_pub = nh.advertise<geometry_msgs::TwistStamped>(raw_twist_topic.c_str(), 1);
 	// Initialize variables
 	speed = 0;
 	angle = 0;
@@ -217,6 +224,18 @@ void Kbhit::stop_robot(){
 	twist_pub.publish(twist_msg);
 }
 
+void Kbhit::send_raw_twist(char c){
+	if (c >= '0' || c <= '9'){
+		int number = c - '0';
+		ROS_WARN("INT: %d", number);
+		++raw_twist_msg.header.seq;
+		raw_twist_msg.header.stamp = ros::Time::now();
+		raw_twist_msg.twist.angular.z = 0;	
+		raw_twist_msg.twist.linear.x = (double)number*0.1;
+		raw_twist_pub.publish(raw_twist_msg);
+	}
+}
+
 void Kbhit::readKeys(){
 	/* test if a key has been pressed */
 	if (kbhit_test())
@@ -227,16 +246,17 @@ void Kbhit::readKeys(){
 		/* print the numerical value of the key */
 		if (c != KEY_ESCAPE && c != KEY_SECOND && !second_key)
 			//printf ("Key code: %d\n", c);
-			ROS_INFO("Key code: %d\n", c);
+			ROS_INFO("Key code: %d", c);
 		else if (second_key)
 			//printf ("Secondary key code: %d\n", c);
-			ROS_INFO ("Secondary key code: %d\n", c);
+			ROS_INFO ("Secondary key code: %d", c);
 
 		/* echo numeric keys */
-		if (second_key == false && c >= '0' && c <= '9')
+		if (second_key == false && c >= '0' && c <= '9'){
 			//printf ("Numeric key %c pressed\n", c);
-			ROS_INFO ("Numeric key %c pressed\n", c);
-
+			ROS_INFO ("Numeric key %c pressed", c);
+			send_raw_twist(c);
+		}
 		/* handle keys */
 		switch (c)
 		{
@@ -264,7 +284,7 @@ void Kbhit::readKeys(){
 					esc_key = false;
 					keyHandle('a');
 					//printf ("Left arrow pressed\n");
-					ROS_INFO ("Left arrow pressed\n");
+					ROS_INFO ("Left arrow pressed");
 				}
 				break;
 			case KEY_ARROW_UP:
@@ -274,7 +294,7 @@ void Kbhit::readKeys(){
 					esc_key = false;
 					keyHandle('w');
 					//printf ("Up arrow pressed\n");
-					ROS_INFO ("Up arrow pressed\n");
+					ROS_INFO ("Up arrow pressed");
 				}
 				break;
 			case KEY_ARROW_DOWN:
@@ -284,7 +304,7 @@ void Kbhit::readKeys(){
 					esc_key = false;
 					keyHandle('s');
 					//printf ("Down arrow pressed\n");
-					ROS_INFO ("Down arrow pressed\n");
+					ROS_INFO ("Down arrow pressed");
 				}
 				break;
 			case KEY_SPACE:
@@ -312,3 +332,4 @@ int main(int argc, char **argv){
 	}
 	return 0;
 }
+
