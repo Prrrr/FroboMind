@@ -32,4 +32,8 @@
 			<param name="bytes" value="7"/>
 		</node>
 	</group>
+<!--
+	<node pkg="rxtools" type="rxplot" name="plot" args="/Hilde/wheel_speed_topic/data[0] /Hilde/wheel_speed_topic/data[1] -p 50"/>-->
+
+	<node pkg="rxtools" type="rxplot" name="plot" args="/Hilde/wheel_speed_topic/data[0]:data[1] -p 50"/>
 </launch>
