@@ -1,20 +1,45 @@
 <?xml version="1.0"?>
 <launch>
 <!--	<node pkg="tf" type="static_transform_publisher" name="static_laser_link_tf" args="x y z yaw pitch roll frame_id child_frame_id period_in_ms"> -->
-	<node pkg="tf" type="static_transform_publisher" name="static_laser_link_tf" args="0.1 0 0 0 0 0 base_link base_laser 100" /> 
-	<node pkg="tf" type="static_transform_publisher" name="static_laser_link_tf" args="0 0 0 0 0 0 base_link odom 100" /> 
+	<node pkg="tf" type="static_transform_publisher" name="static_laser_link_tf" args="0.1 0 0 0 0 0 odom base_laser 100" /> 
 
 	<rosparam>use_sim_time: true</rosparam>
 	
-	<!--<node pkg="rviz" type="rviz" name="rviz" args="-d /home/ege/ros_work/rviz/display_config" />-->
+<!--	<node pkg="rviz" type="rviz" name="rviz" args="-d /home/ege/ros_work/rviz/display_config" /> -->
+<!--	<node pkg="rviz" type="rviz" name="rviz"/>-->
 	<node pkg="fmProcessors" type="row_localizer.py" name="localization_node" output="screen">
 		<param name="row_topic" value="/lrs/row_topic"/>
 		<param name="gyro_topic" value="/fmSensors/Gyroscope"/>
 		<param name="odom_topic" value="/base_odom"/>
+		<param name="row_state_topic" value="/nav/row_state_topic"/>
 		<param name="dt" value="0.02"/>
 		<param name="frame_id" value="world"/>
 		<param name="child_frame_id" value="odom"/>
 	</node>
-	<node pkg="rosbag" type="play" name="playback_data" args="/home/ege/ros_work/bags/30April/run8.bag --clock" output="screen"/>
+
+<!--	<node pkg="gmapping" type="slam_gmapping" name="mapping">
+		<remap from="scan" to ="/lrs/laser_msgs_1" />		
+		<param name="base_frame" value="odom" />
+		<param name="map_frame" value="map" />
+		<param name="odom_frame" value="world" />
+		<param name="map_update_interval" value="0.5" />
+		<param name="linearUpdate" value="0.1" />
+		<param name="angularUpdate" value="0.1" />
+		<param name="delta" value="0.05" />
+		<param name="srr" value="0.05" />
+		<param name="srt" value="0.1" />
+		<param name="stt" value="0.1" />
+		<param name="str" value="0.05" />
+		<param name="particles" value="50" />
+		<param name="inverted_laser" value="false" />
+
+	</node>
+-->
+<!--	<node pkg="rxtools" type="rxplot" name="plot" args="/base_odom/pose/pose/position/x /base_odom/pose/pose/position/y  -p 100" />-->
+<!--	<node pkg="rosbag" type="play" name="playback_data" args="/home/ege/ros_work/bags/1Maj/long_straight_run1_12_80m.bag --><!--clock"/> -->
+
+<!--	<node pkg="rosbag" type="play" name="playback_data" args="/home/ege/ros_work/bags/run4.bag --><!--clock"/>-->
+
+	<node pkg="rosbag" type="play" name="playback_data" args="/home/ege/ros_work/bags/2Maj/weaving_run1.bag --clock"/>
 
 </launch>
