@@ -148,6 +148,7 @@ void PotDecision::run_state_machine() {
 					}
 				}
 			}
+			twist_msg.twist.angular.z = cte_pid.run(twist_msg.twist.angular.z, 0.02);
 			break;
 		
 		case STM_TURNING:
