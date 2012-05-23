@@ -207,6 +207,7 @@ void PotDecision::run_state_machine() {
 	
 	if(publish_twist)
 	{
+		twist_msg.twist.angular.z = cte_pid.run(twist_msg.twist.angular.z, 0.02);
 		twist_pub.publish(twist_msg);
 		publish_twist = 0;
 	}
@@ -392,7 +393,7 @@ void PotDecision::calculate_twist_from_object_boxes() {
 	}
 	
 	double cte_t = cross_track_error;
-	cross_track_error = cte_pid.run(cross_track_error, dt);
+	//cross_track_error = cte_pid.run(cross_track_error, dt);
 	
 	// Build twist
 	twist_msg.twist.angular.z += cross_track_error;
