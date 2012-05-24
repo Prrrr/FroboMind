@@ -17,9 +17,9 @@
 			<param name="base_link_radius_to_wheels" value="0.185" type="double"/>
 			<param name="dead_reckoning_linearization_turn_rate_threshold" value="0.0001" type="double"/>
 			<param name="max_velocity" value="0.55" type="double"/>
-			<param name="kp" value="1" type="double"/>
-			<param name="ki" value="0" type="double"/>
-			<param name="kd" value="0" type="double"/>
+			<param name="kp" value="1.1" type="double"/>
+			<param name="ki" value="0.3" type="double"/>
+			<param name="kd" value="0.01" type="double"/>
 
 		</node>
 		<node pkg="fmBSP" name="slip_node" type="slip_node">
@@ -39,5 +39,5 @@
 <!--
 	<node pkg="rxtools" type="rxplot" name="plot" args="/Hilde/wheel_speed_topic/data[0] /Hilde/wheel_speed_topic/data[1] -p 50"/>-->
 
-	<node pkg="rxtools" type="rxplot" name="plot" args="/Hilde/wheel_speed_topic/data[0]:data[1] -p 50"/>
+	<node pkg="rxtools" type="rxplot" name="plot" args="/Hilde/wheel_speed_topic/data[0]:data[1]:data[2]:data[3] -p 50"/>
 </launch>

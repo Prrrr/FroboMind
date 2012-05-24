@@ -174,6 +174,8 @@ void Hilde::serialCallback(const fmMsgs::serial_bin::ConstPtr& msg){
 	wheel_speeds_msg.data.clear();
 	wheel_speeds_msg.data.push_back(avelr);
 	wheel_speeds_msg.data.push_back(avell);
+	wheel_speeds_msg.data.push_back(desired_vr);
+	wheel_speeds_msg.data.push_back(desired_vl);
 	
 	wheelspeed_publisher.publish(wheel_speeds_msg);
 	//ROS_INFO("Left/right: %f, %f", avell, avelr);
@@ -266,9 +268,19 @@ void Hilde::calculateMotorFromTwist(double linear_vel, double angular_vel){
 	desired_vl = left_velocity;
 	desired_vr = right_velocity;
 	// Set the speeds
-	set_speeds(output_left, output_right);
+	set_speeds(left_velocity, right_velocity);
 }
 void Hilde::set_speeds(double left, double right){
+	if (left > max_velocity){
+		left = max_velocity;
+	}else if (left <= 0){
+		left = 0;
+	}
+	if (right > max_velocity){
+		right = max_velocity;
+	}else if (right <= 0){
+		right = 0;
+	}
 	// Calculate velocity relative to 8-bits
 	double temp_output_left = left / max_velocity * 127;
 	double temp_output_right = right / max_velocity * 127;
