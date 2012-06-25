@@ -17,8 +17,8 @@
 			<param name="cte_weight_angle" value="1.0" type="double"/>
 			<param name="cte_weight_distance" value="0.0" type="double"/>
 			<param name="cte_kp" value="1" type="double"/>
-			<param name="cte_ki" value="0.1" type="double"/>
-			<param name="cte_kd" value="-0.1" type="double"/>
+			<param name="cte_ki" value="0" type="double"/>
+			<param name="cte_kd" value="0" type="double"/>
 			<param name="object_row_box_filled_threshold" value="0" type="int"/>
 			<param name="object_row_threshold" value="0.5" type="double"/>
 			<param name="dead_reckoning_turn_rate" value="1.5" type="double"/>
