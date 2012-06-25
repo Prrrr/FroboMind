@@ -207,35 +207,32 @@ void PotDecision::run_state_machine() {
 				publish_twist = 1;
 			}
 
-			// Increment counters
-			if(row_state == RST_BETWEEN_ROWS) {
-				between_row_counter++;
-				speed_factor = (object_row_fill_percent_left + object_row_fill_percent_right) / 2;
-			} else if(row_state == RST_RIGHT_ROW) {
-				right_row_counter++;
-				speed_factor = object_row_fill_percent_right;
-			} else if(row_state == RST_LEFT_ROW) {
-				left_row_counter++;
-				speed_factor = object_row_fill_percent_left;
-			}
+			// This is not needed in this state
+			// but if it fails, return it to normal function
+//			// Increment counters
+//			if(row_state == RST_BETWEEN_ROWS) {
+//				between_row_counter++;
+//				speed_factor = (object_row_fill_percent_left + object_row_fill_percent_right) / 2;
+//			} else if(row_state == RST_RIGHT_ROW) {
+//				right_row_counter++;
+//				speed_factor = object_row_fill_percent_right;
+//			} else if(row_state == RST_LEFT_ROW) {
+//				left_row_counter++;
+//				speed_factor = object_row_fill_percent_left;
+//			}
 
 			// Clamp speed factor
-			if(speed_factor > 1)
-			{
-				speed_factor = 1;
-			} else if (speed_factor < 0.5) {
-				speed_factor = 0.5;
-			}
+			speed_factor = 0.5;
 
 			twist_msg.twist.linear.x = speed_factor * linear_mean_velocity;
 			// check for a hole to enter
 			if (next_turn_direction == LEFT){
-				if (left_row_finder.hole_start == 0 && left_row_finder.hole_end > 2){
+				if (left_row_finder.hole_start <= 1 && left_row_finder.hole_end > 2){
 					ROS_WARN("State: TURNING");
 					state = STM_TURNING;
 				}
 			}else{
-				if (right_row_finder.hole_start == 0 && right_row_finder.hole_end > 2){
+				if (right_row_finder.hole_start <= 1 && right_row_finder.hole_end > 2){
 					ROS_WARN("State: TURNING");
 					state = STM_TURNING;
 				}
