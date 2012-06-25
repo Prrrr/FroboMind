@@ -8,7 +8,7 @@
 
 #include "PotDecision.h"
 using namespace std;
- 
+
 // Statemachine defines
 	enum { 
 		STM_START, 
@@ -16,7 +16,9 @@ using namespace std;
 		STM_DRIVE, 
 		STM_STOP,
 		STM_TURNING,
-		STM_END_OF_ROW
+		STM_END_OF_ROW,
+		STM_EXIT_ROW,
+		STM_HEADLAND
 	};
  
  	enum { 
@@ -51,6 +53,9 @@ PotDecision::PotDecision() {
 	
 	// Navigation
 	next_turn_direction = RIGHT;
+
+	// state space
+	state_space.b = 0.18;
 }
 
 /*
@@ -122,37 +127,120 @@ void PotDecision::run_state_machine() {
 				if(object_row_end_position_right <= 0) {
 					next_turn_direction = RIGHT;
 					ROS_INFO("Going right");
-					state = STM_TURNING;
-					ROS_WARN("State: Turning");
+					//state = STM_TURNING;
+					// clear state space values
+					state_space.set_zero();
+					state = STM_EXIT_ROW;
+					ROS_WARN("State: EXIT_ROW");
 				}
 			} else if (left_row_counter > right_row_counter && left_row_counter > between_row_counter) {
 				twist_msg.twist.angular.z -= 0.2;
 				if(object_row_end_position_left <= 0) {
 					next_turn_direction = LEFT;
 					ROS_INFO("Going left");
-					state = STM_TURNING;
-					ROS_WARN("State: Turning");
+					//state = STM_TURNING;
+					// clear state space values
+					state_space.set_zero();
+					state = STM_EXIT_ROW;
+					ROS_WARN("State: Exit row");
 				}
 			} else {
 				if (next_turn_direction == RIGHT) {
 					if(object_row_end_position_right <= 0) {
 						ROS_INFO("Going right");
-						state = STM_TURNING;
-						ROS_WARN("State: Turning");
+						//state = STM_TURNING;
+						// clear state space values
+						state_space.set_zero();
+						state = STM_EXIT_ROW;
+						ROS_WARN("State: Exit row");
 					}
 				} else {
 					if(object_row_end_position_left <= 0) {
 						ROS_INFO("Going left");
-						state = STM_TURNING;
-						ROS_WARN("State: Turning");
+						//state = STM_TURNING;
+						// clear state space values
+						state_space.set_zero();
+						state = STM_EXIT_ROW;
+						ROS_WARN("State: Exit row");
 					}
 				}
 			}
 			twist_msg.twist.angular.z = cte_pid.run(twist_msg.twist.angular.z, 0.02);
 			break;
-		
+		case STM_EXIT_ROW:
+			// keep driving
+			// To avoid crashing into ponies.
+			if(new_object_message_received)
+			{
+				new_object_message_received = 0;
+				calculate_twist_from_object_boxes();
+				publish_twist = 1;
+			}
+
+			twist_msg.twist.angular.z = abs(twist_msg.twist.angular.z);
+			twist_msg.twist.angular.z += dead_reckoning_turn_rate;
+			twist_msg.twist.linear.x = 0.5;
+
+			// FLip the sign if we need to go left
+			if(next_turn_direction == LEFT)
+			{
+				twist_msg.twist.angular.z = -twist_msg.twist.angular.z;
+			}
+			// keep calculating odometry
+			state_space.calc_odom(wheel_speed_left, wheel_speed_right, 0.02);
+			if (abs(state_space.th) > M_PI/2){
+				state = STM_HEADLAND;
+				ROS_WARN("State: headland");
+				between_row_counter = 0;
+				right_row_counter = 0;
+				left_row_counter = 0;
+			}
+			break;
+		case STM_HEADLAND:
+			// drive straight
+			// Driving. Calculate twist when new box-info comes in
+			if(new_object_message_received)
+			{
+				new_object_message_received = 0;
+				calculate_twist_from_object_boxes();
+				publish_twist = 1;
+			}
+
+			// Increment counters
+			if(row_state == RST_BETWEEN_ROWS) {
+				between_row_counter++;
+				speed_factor = (object_row_fill_percent_left + object_row_fill_percent_right) / 2;
+			} else if(row_state == RST_RIGHT_ROW) {
+				right_row_counter++;
+				speed_factor = object_row_fill_percent_right;
+			} else if(row_state == RST_LEFT_ROW) {
+				left_row_counter++;
+				speed_factor = object_row_fill_percent_left;
+			}
+
+			// Clamp speed factor
+			if(speed_factor > 1)
+			{
+				speed_factor = 1;
+			} else if (speed_factor < 0.5) {
+				speed_factor = 0.5;
+			}
+
+			twist_msg.twist.linear.x = speed_factor * linear_mean_velocity;
+			// check for a hole to enter
+			if (next_turn_direction == LEFT){
+				if (left_row_finder.hole_start == 0 && left_row_finder.hole_end > 2){
+					ROS_WARN("State: TURNING");
+					state = STM_TURNING;
+				}
+			}else{
+				if (right_row_finder.hole_start == 0 && right_row_finder.hole_end > 2){
+					ROS_WARN("State: TURNING");
+					state = STM_TURNING;
+				}
+			}
+			break;
 		case STM_TURNING:
-					
 			// To avoid crashing into ponies.
 			if(new_object_message_received)
 			{
@@ -227,7 +315,9 @@ void PotDecision::extract_object_row_data() {
 	int l_end_found = -1, r_end_found = -1;
 	double fill_rate_left = 0, fill_rate_right = 0;
 	int left_hole_width = 0, right_hole_width = 0, left_hole_valid = 0, right_hole_valid = 0;
-	
+	// Clear hole/row finder data
+	left_row_finder.clear_values();
+	right_row_finder.clear_values();
 	for(int i = 0; i < object_row_left.size(); i++)
 	{
 		if(object_row_left[i] > object_row_box_filled_threshold) {
@@ -237,7 +327,9 @@ void PotDecision::extract_object_row_data() {
 			{
 				left_hole_valid = 1;
 			}
+			left_row_finder.list.push_back(true);
 		} else {
+			left_row_finder.list.push_back(false);
 			left_hole_valid = 0;
 			left_hole_width++;
 		}
@@ -248,11 +340,18 @@ void PotDecision::extract_object_row_data() {
 			{
 				right_hole_valid = 1;
 			}
+			right_row_finder.list.push_back(true);
 		} else {
+			right_row_finder.list.push_back(false);
 			right_hole_valid = 0;
 			right_hole_width++;
 		}
 	}
+
+	right_row_finder.run_scheme();
+	ROS_INFO("RIGHT ROW: rs:%d re:%d hs:%d he:%d", right_row_finder.row_start, right_row_finder.row_end, right_row_finder.hole_start, right_row_finder.hole_end);
+	left_row_finder.run_scheme();
+	ROS_INFO("LEFT ROW: rs:%d re:%d hs:%d he:%d", left_row_finder.row_start, left_row_finder.row_end, left_row_finder.hole_start, left_row_finder.hole_end);
 	
 	object_row_end_position_left = object_row_start_position + ((l_end_found + 1) * object_row_resolution);
 	object_row_end_position_right = object_row_start_position + ((r_end_found + 1) * object_row_resolution);

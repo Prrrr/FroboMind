@@ -21,6 +21,68 @@
 	
 	 
 using namespace std;
+
+
+struct state_space{
+	double b;
+	double x, y, th;
+	void set_zero(){
+		x = 0;
+		y = 0;
+		th = 0;
+	}
+	void calc_odom(double left, double right, double dt){
+		double V = (left + right)/2;
+		double w = (right + left)/(2*b);
+		x = x + V*cos(th);
+		y = y + V*sin(th);
+		th = th + w*dt;
+	}
+}state_space;
+
+struct row_hole_finder{
+	int hole_start, hole_end, row_start, row_end;
+	vector<bool> list;
+	void clear_values(){
+		list.clear();
+		hole_start = -1;
+		hole_end = -1;
+		row_end = -1;
+		row_start = -1;
+	}
+
+	void run_scheme(){
+		// Hole detecting scheme
+		for (int i = 0; i < list.size(); i++){
+			if (i == 0){
+				if (list[i]){
+					row_start = i;
+				}else{
+					hole_start = i;
+				}
+			}else{
+				if (list[i] && !list[i-1]){
+					if (row_start == -1){
+						row_start = i;
+					}
+					hole_end = i - 1;
+				}else if (!list[i] && list[i-1]){
+					if (hole_start == -1){
+						hole_start = i;
+					}
+					row_end = i - 1;
+				}
+			}
+		}
+		if (hole_start > -1 && hole_end == -1){
+			hole_end = list.size();
+		}
+		if (row_start > -1 && row_end == -1){
+			row_end = list.size();
+		}
+	}
+};
+
 class PotDecision {
 private:
 	// New Data flags
@@ -57,6 +119,7 @@ private:
 	double object_row_fill_percent_right;
 	ros::Time object_row_data_last_update;
 	int row_state;
+	row_hole_finder left_row_finder, right_row_finder;
 	
 public:
 	PotDecision();
