@@ -188,6 +188,7 @@ void PotDecision::run_state_machine() {
 			}
 			// keep calculating odometry
 			state_space.calc_odom(wheel_speed_left, wheel_speed_right, 0.02);
+			ROS_INFO("state x:%f, y:%f, th:%f", state_space.x, state_space.y, state_space.th);
 			if (abs(state_space.th) > M_PI/2){
 				state = STM_HEADLAND;
 				ROS_WARN("State: headland");
