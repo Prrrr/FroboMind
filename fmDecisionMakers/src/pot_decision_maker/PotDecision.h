@@ -33,7 +33,7 @@ struct state_space{
 	}
 	void calc_odom(double left, double right, double dt){
 		double V = (left + right)/2;
-		double w = (right + left)/(2*b);
+		double w = (right - left)/(2*b);
 		x = x + V*cos(th);
 		y = y + V*sin(th);
 		th = th + w*dt;

@@ -350,9 +350,9 @@ void PotDecision::extract_object_row_data() {
 	}
 
 	right_row_finder.run_scheme();
-	ROS_INFO("RIGHT ROW: rs:%d re:%d hs:%d he:%d", right_row_finder.row_start, right_row_finder.row_end, right_row_finder.hole_start, right_row_finder.hole_end);
+//	ROS_INFO("RIGHT ROW: rs:%d re:%d hs:%d he:%d", right_row_finder.row_start, right_row_finder.row_end, right_row_finder.hole_start, right_row_finder.hole_end);
 	left_row_finder.run_scheme();
-	ROS_INFO("LEFT ROW: rs:%d re:%d hs:%d he:%d", left_row_finder.row_start, left_row_finder.row_end, left_row_finder.hole_start, left_row_finder.hole_end);
+//	ROS_INFO("LEFT ROW: rs:%d re:%d hs:%d he:%d", left_row_finder.row_start, left_row_finder.row_end, left_row_finder.hole_start, left_row_finder.hole_end);
 	
 	object_row_end_position_left = object_row_start_position + ((l_end_found + 1) * object_row_resolution);
 	object_row_end_position_right = object_row_start_position + ((r_end_found + 1) * object_row_resolution);
