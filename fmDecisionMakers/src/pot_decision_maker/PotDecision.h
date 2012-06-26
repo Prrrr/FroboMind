@@ -25,18 +25,22 @@ using namespace std;
 
 struct state_space{
 	double b;
-	double x, y, th, gyro_th;
+	double x, y, th, gyro_th, gyro_old;
 	void set_zero(){
 		x = 0;
 		y = 0;
 		th = 0;
+		gyro_th = 0;
+		gyro_old = 0;
 	}
-	void calc_odom(double left, double right, double dt){
+	void calc_odom(double left, double right, double dt, double gyro){
 		double V = (left + right)/2;
 		double w = (right - left)/(2*b);
 		x = x + V*cos(th)*dt;
 		y = y + V*sin(th)*dt;
 		th = th + w*dt;
+		gyro_th = gyro * dt + gyro_old;
+		gyro_old = gyro_th; 
 	}
 }state_space;
 

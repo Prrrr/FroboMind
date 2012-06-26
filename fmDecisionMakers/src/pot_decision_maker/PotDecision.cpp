@@ -80,12 +80,13 @@ void PotDecision::run_state_machine() {
 	static int state = STM_START;
 	int publish_twist = 0;
 	static int between_row_counter = 0, right_row_counter = 0, left_row_counter = 0;
-	static int passed_row = 0;
-	static int passed_hole = 0;
+//	static int passed_row = 0;
+//	static int passed_hole = 0;
 	static int rowcount = 0;
 	static int holecount = 0;	
 	double speed_factor = 0;
-	
+	double gyro_offset = 0;
+	double gyro = 0;
 	
 	// Build twist
 	++twist_msg.header.seq;
@@ -103,6 +104,8 @@ void PotDecision::run_state_machine() {
 				between_row_counter = 0;
 				right_row_counter = 0;
 				left_row_counter = 0;
+				gyro_offset = gyro_z;
+				
 			}
 			break;
 			
@@ -216,14 +219,15 @@ void PotDecision::run_state_machine() {
 				twist_msg.twist.angular.z = -twist_msg.twist.angular.z;
 			}
 			// keep calculating odometry
-			state_space.calc_odom(wheel_speed_left, wheel_speed_right, 0.02);
-			ROS_INFO("state x:%f, y:%f, th:%f", state_space.x, state_space.y, state_space.th);
+			gyro = gyro_z - gyro_offset;
+			state_space.calc_odom(wheel_speed_left, wheel_speed_right, 0.02, gyro);
+			ROS_INFO("state x:%f, y:%f, th:%f, gy_th:%f", state_space.x, state_space.y, state_space.th, state_space.gyro_th);
 			if (abs(state_space.th) > M_PI/2){
 				state = STM_HEADLAND;
-				passed_row = 0;
+				//passed_row = 0;
 				rowcount = 0;
 				holecount = 0;
-				passed_hole = 0;
+				//passed_hole = 0;
 				state_space.set_zero();
 				ROS_WARN("State: headland");
 				between_row_counter = 0;
@@ -348,7 +352,8 @@ void PotDecision::run_state_machine() {
 			twist_msg.twist.linear.x = speed_factor * linear_mean_velocity;
 			
 			//keep calculating odometry
-			state_space.calc_odom(wheel_speed_left, wheel_speed_right, 0.02);
+			gyro = gyro_z - gyro_offset;
+			state_space.calc_odom(wheel_speed_left, wheel_speed_right, 0.02, gyro);
 			
 			if (next_turn_direction == LEFT){
 				if(!left_row_finder.list[1] && state_space.x > 0.3 )	{
@@ -381,8 +386,8 @@ void PotDecision::run_state_machine() {
 			twist_msg.twist.linear.x = speed_factor * linear_mean_velocity;			
 			
 			//keep calculating odometry
-			state_space.calc_odom(wheel_speed_left, wheel_speed_right, 0.02);
-						
+			gyro = gyro_z - gyro_offset;
+			state_space.calc_odom(wheel_speed_left, wheel_speed_right, 0.02, gyro);
 	
 			//if (holecount == 2 && rowcount == 2) {
 			//ROS_WARN("State: TURNING");
@@ -619,7 +624,7 @@ void PotDecision::objectCallback(const fmMsgs::detected_objects::ConstPtr& objec
 }
 
 void PotDecision::gyroCallback(const fmMsgs::gyroscope::ConstPtr& gyro) {
-	ROS_INFO("Gyro z: %f", gyro->z);
+	//ROS_INFO("Gyro z: %f", gyro->z);
 	new_gyro = 1;
 	gyro_z = gyro->z;
 }
