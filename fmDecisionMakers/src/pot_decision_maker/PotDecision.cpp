@@ -73,6 +73,8 @@ void PotDecision::run_state_machine() {
 	static int between_row_counter = 0, right_row_counter = 0, left_row_counter = 0;
 	static int passed_row = 0;
 	static int passed_hole = 0;
+	static int rowcount = 0;
+	static int holecount = 0;	
 	double speed_factor = 0;
 	
 	// Build twist
@@ -196,6 +198,8 @@ void PotDecision::run_state_machine() {
 			if (abs(state_space.th) > M_PI/2){
 				state = STM_HEADLAND;
 				passed_row = 0;
+				rowcount = 0;
+				holecount = 0;
 				passed_hole = 0;
 				state_space.set_zero();
 				ROS_WARN("State: headland");
@@ -220,8 +224,43 @@ void PotDecision::run_state_machine() {
 			twist_msg.twist.linear.x = speed_factor * linear_mean_velocity;
 			// check for a hole to enter
 
-			
 			if (next_turn_direction == LEFT){
+			
+				if (left_row_finder.list[1])
+				{
+				state = STM_HEADLAND_ROW;
+				state_space.set_zero();
+				rowcount++;				
+				ROS_INFO("Entered HEADLAND_ROW state %d", rowcount);
+				}							
+				else if (!left_row_finder.list[1])
+				{
+				state = STM_HEADLAND_HOLE;
+				state_space.set_zero();
+				holecount++;
+				rowcount++;
+				ROS_INFO("Entered HEADLAND_HOLE state %d", holecount);
+				}			
+			}
+			else if (next_turn_direction == RIGHT){
+			
+				if (right_row_finder.list[1])
+				{
+				rowcount++;
+				ROS_INFO("Entered HEADLAND_ROW state %d", rowcount);				
+				state = STM_HEADLAND_ROW;
+				state_space.set_zero();
+				}							
+				else if (!right_row_finder.list[1])
+				{
+				holecount++;
+				rowcount++;
+				ROS_INFO("Entered HEADLAND_HOLE state %d", holecount);
+				state = STM_HEADLAND_HOLE;
+				state_space.set_zero();
+				}			
+			}
+			/*if (next_turn_direction == LEFT){
 				//keep calculating odometry
 				state_space.calc_odom(wheel_speed_left, wheel_speed_right, 0.02);
 
@@ -268,8 +307,83 @@ void PotDecision::run_state_machine() {
 				passed_row++;
 				ROS_INFO("detected rows: %d",passed_row);
 				}
+			}*/
+			break;
+
+		case STM_HEADLAND_ROW:
+
+			if(new_object_message_received)
+			{
+				new_object_message_received = 0;
+				calculate_twist_from_object_boxes();
+				publish_twist = 1;
+			}
+
+			// Clamp speed factor
+			speed_factor = 0.5;
+
+			twist_msg.twist.linear.x = speed_factor * linear_mean_velocity;
+			
+			//keep calculating odometry
+			state_space.calc_odom(wheel_speed_left, wheel_speed_right, 0.02);
+			
+			if (next_turn_direction == LEFT){
+				if(!left_row_finder.list[1] && state_space.x > 0.3 )	{
+				state = STM_HEADLAND_HOLE;
+				holecount++;
+				state_space.set_zero();
+				ROS_INFO("Entered HEADLAND_HOLE state %d", holecount);
+				}
+			}
+			else if (next_turn_direction == RIGHT){
+				if(!right_row_finder.list[1] && state_space.x > 0.3 )	{
+				state = STM_HEADLAND_HOLE;
+				holecount++;
+				state_space.set_zero();
+				ROS_INFO("Entered HEADLAND_HOLE state %d", holecount);
+				}
 			}
 			break;
+		case STM_HEADLAND_HOLE:
+			if(new_object_message_received)
+			{
+				new_object_message_received = 0;
+				calculate_twist_from_object_boxes();
+				publish_twist = 1;
+			}
+
+			// Clamp speed factor
+			speed_factor = 0.5;
+
+			twist_msg.twist.linear.x = speed_factor * linear_mean_velocity;			
+			
+			//keep calculating odometry
+			state_space.calc_odom(wheel_speed_left, wheel_speed_right, 0.02);
+						
+	
+			if (holecount == 1 && rowcount == 2) {
+			ROS_WARN("State: TURNING");
+			state = STM_TURNING;
+			}
+			
+			else if (next_turn_direction == LEFT){
+				if(left_row_finder.list[1] && state_space.x > 0.5 )	{
+				state = STM_HEADLAND_ROW;
+				rowcount++;
+				state_space.set_zero();
+				ROS_INFO("Entered HEADLAND_ROW state %d", rowcount);
+				}
+			}
+			else if (next_turn_direction == RIGHT){
+				if(right_row_finder.list[1] && state_space.x > 0.5 )	{
+				state = STM_HEADLAND_ROW;
+				rowcount++;
+				state_space.set_zero();
+				ROS_INFO("Entered HEADLAND_ROW state %d", rowcount);
+				}
+			}
+			break;
+
 		case STM_TURNING:
 			// To avoid crashing into ponies.
 			if(new_object_message_received)
