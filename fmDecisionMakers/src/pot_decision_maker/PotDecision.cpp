@@ -18,7 +18,9 @@ using namespace std;
 		STM_TURNING,
 		STM_END_OF_ROW,
 		STM_EXIT_ROW,
-		STM_HEADLAND
+		STM_HEADLAND,
+		STM_HEADLAND_ROW,
+		STM_HEADLAND_HOLE
 	};
  
  	enum { 
@@ -195,6 +197,7 @@ void PotDecision::run_state_machine() {
 				state = STM_HEADLAND;
 				passed_row = 0;
 				passed_hole = 0;
+				state_space.set_zero();
 				ROS_WARN("State: headland");
 				between_row_counter = 0;
 				right_row_counter = 0;
@@ -216,40 +219,52 @@ void PotDecision::run_state_machine() {
 
 			twist_msg.twist.linear.x = speed_factor * linear_mean_velocity;
 			// check for a hole to enter
+
+			
 			if (next_turn_direction == LEFT){
-				if (left_row_finder.hole_start <= 1 && left_row_finder.hole_end > 3){
+				//keep calculating odometry
+				state_space.calc_odom(wheel_speed_left, wheel_speed_right, 0.02);
+
+				if (left_row_finder.hole_start <= 1 && left_row_finder.hole_end > 2){
 					if(passed_hole == 1 && passed_row == 2) 
 					{
 					ROS_WARN("State: TURNING");
 					state = STM_TURNING;
 					}
-					else if(passed_hole == passed_row-1)
+					else if(passed_hole == passed_row-1 && state_space.x > 0.3)
 					{
+					state_space.set_zero();					
 					passed_hole++;
 					ROS_INFO("detected holes: %d",passed_hole);
 					}
 
 				}
-				else if(left_row_finder.row_start <= 1 && left_row_finder.row_end > 2 && passed_hole == passed_row )
+				else if(left_row_finder.row_start <= 1 && left_row_finder.row_end > 2 && passed_hole == passed_row && state_space.x > 0.5  )
 				{
+				state_space.set_zero();
 				passed_row++;
 				ROS_INFO("detected rows: %d",passed_row);
 				}
-			}else{
-				if (right_row_finder.hole_start <= 1 && right_row_finder.hole_end > 3){
+			}else{	
+				//keep calculating odometry
+				state_space.calc_odom(wheel_speed_left, wheel_speed_right, 0.02);
+				
+				if (right_row_finder.hole_start <= 1 && right_row_finder.hole_end > 2){
 					if(passed_hole == 1 && passed_row == 2) 
 					{
 					ROS_WARN("State: TURNING");
 					state = STM_TURNING;
 					}
-					if(passed_hole == passed_row-1)
+					else if(passed_hole == passed_row-1 && state_space.x > 0.3)
 					{
+					state_space.set_zero();
 					passed_hole++;
 					ROS_INFO("detected holes: %d",passed_hole);
 					}
 				}
-				else if(right_row_finder.row_start <= 1 && right_row_finder.row_end > 2 && passed_hole == passed_row )
+				else if(right_row_finder.row_start <= 1 && right_row_finder.row_end > 2 && passed_hole == passed_row && state_space.x > 0.5 )
 				{
+				state_space.set_zero();
 				passed_row++;
 				ROS_INFO("detected rows: %d",passed_row);
 				}
