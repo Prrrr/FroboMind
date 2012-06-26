@@ -25,7 +25,7 @@ using namespace std;
 
 struct state_space{
 	double b;
-	double x, y, th;
+	double x, y, th, gyro_th;
 	void set_zero(){
 		x = 0;
 		y = 0;

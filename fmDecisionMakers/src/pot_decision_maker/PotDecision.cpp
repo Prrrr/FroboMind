@@ -619,7 +619,7 @@ void PotDecision::objectCallback(const fmMsgs::detected_objects::ConstPtr& objec
 }
 
 void PotDecision::gyroCallback(const fmMsgs::gyroscope::ConstPtr& gyro) {
-	//ROS_INFO("Gyro z: %f", gyro->z);
+	ROS_INFO("Gyro z: %f", gyro->z);
 	new_gyro = 1;
 	gyro_z = gyro->z;
 }
