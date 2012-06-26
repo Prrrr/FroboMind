@@ -361,7 +361,7 @@ void PotDecision::run_state_machine() {
 			state_space.calc_odom(wheel_speed_left, wheel_speed_right, 0.02);
 						
 	
-			if (holecount == 1 && rowcount == 2) {
+			if (holecount == 2 && rowcount == 2) {
 			ROS_WARN("State: TURNING");
 			state = STM_TURNING;
 			}
