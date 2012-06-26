@@ -217,37 +217,41 @@ void PotDecision::run_state_machine() {
 			twist_msg.twist.linear.x = speed_factor * linear_mean_velocity;
 			// check for a hole to enter
 			if (next_turn_direction == LEFT){
-				if (left_row_finder.hole_start <= 1 && left_row_finder.hole_end > 2){
-					if(passed_hole == 1 && row_passed == 2) 
+				if (left_row_finder.hole_start <= 1 && left_row_finder.hole_end > 3){
+					if(passed_hole == 1 && passed_row == 2) 
 					{
 					ROS_WARN("State: TURNING");
 					state = STM_TURNING;
 					}
-					else if(passed_hole == row_passed-1)
+					else if(passed_hole == passed_row-1)
 					{
 					passed_hole++;
+					ROS_INFO("detected holes: %d",passed_hole);
 					}
 
 				}
-				else if(left_row_finder.row_start <= 1 && left_row_finder.row_end >= 2 && passed_hole == passed_row )
+				else if(left_row_finder.row_start <= 1 && left_row_finder.row_end > 2 && passed_hole == passed_row )
 				{
 				passed_row++;
+				ROS_INFO("detected rows: %d",passed_row);
 				}
 			}else{
-				if (right_row_finder.hole_start <= 1 && right_row_finder.hole_end > 2){
-					if(passed_hole == 1 && row_passed == 2) 
+				if (right_row_finder.hole_start <= 1 && right_row_finder.hole_end > 3){
+					if(passed_hole == 1 && passed_row == 2) 
 					{
 					ROS_WARN("State: TURNING");
 					state = STM_TURNING;
 					}
-					if(passed_hole == row_passed-1)
+					if(passed_hole == passed_row-1)
 					{
 					passed_hole++;
+					ROS_INFO("detected holes: %d",passed_hole);
 					}
 				}
-				else if(right_row_finder.row_start <= 1 && right_row_finder.row_end >= 2 && passed_hole == passed_row )
+				else if(right_row_finder.row_start <= 1 && right_row_finder.row_end > 2 && passed_hole == passed_row )
 				{
 				passed_row++;
+				ROS_INFO("detected rows: %d",passed_row);
 				}
 			}
 			break;
