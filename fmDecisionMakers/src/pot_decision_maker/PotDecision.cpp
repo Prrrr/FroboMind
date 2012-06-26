@@ -69,6 +69,8 @@ void PotDecision::run_state_machine() {
 	static int state = STM_START;
 	int publish_twist = 0;
 	static int between_row_counter = 0, right_row_counter = 0, left_row_counter = 0;
+	static int passed_row = 0;
+	static int passed_hole = 0;
 	double speed_factor = 0;
 	
 	// Build twist
@@ -191,6 +193,8 @@ void PotDecision::run_state_machine() {
 			ROS_INFO("state x:%f, y:%f, th:%f", state_space.x, state_space.y, state_space.th);
 			if (abs(state_space.th) > M_PI/2){
 				state = STM_HEADLAND;
+				passed_row = 0;
+				passed_hole = 0;
 				ROS_WARN("State: headland");
 				between_row_counter = 0;
 				right_row_counter = 0;
@@ -207,20 +211,6 @@ void PotDecision::run_state_machine() {
 				publish_twist = 1;
 			}
 
-			// This is not needed in this state
-			// but if it fails, return it to normal function
-//			// Increment counters
-//			if(row_state == RST_BETWEEN_ROWS) {
-//				between_row_counter++;
-//				speed_factor = (object_row_fill_percent_left + object_row_fill_percent_right) / 2;
-//			} else if(row_state == RST_RIGHT_ROW) {
-//				right_row_counter++;
-//				speed_factor = object_row_fill_percent_right;
-//			} else if(row_state == RST_LEFT_ROW) {
-//				left_row_counter++;
-//				speed_factor = object_row_fill_percent_left;
-//			}
-
 			// Clamp speed factor
 			speed_factor = 0.5;
 
@@ -228,13 +218,36 @@ void PotDecision::run_state_machine() {
 			// check for a hole to enter
 			if (next_turn_direction == LEFT){
 				if (left_row_finder.hole_start <= 1 && left_row_finder.hole_end > 2){
+					if(passed_hole == 1 && row_passed == 2) 
+					{
 					ROS_WARN("State: TURNING");
 					state = STM_TURNING;
+					}
+					else if(passed_hole == row_passed-1)
+					{
+					passed_hole++;
+					}
+
+				}
+				else if(left_row_finder.row_start <= 1 && left_row_finder.row_end >= 2 && passed_hole == passed_row )
+				{
+				passed_row++;
 				}
 			}else{
 				if (right_row_finder.hole_start <= 1 && right_row_finder.hole_end > 2){
+					if(passed_hole == 1 && row_passed == 2) 
+					{
 					ROS_WARN("State: TURNING");
 					state = STM_TURNING;
+					}
+					if(passed_hole == row_passed-1)
+					{
+					passed_hole++;
+					}
+				}
+				else if(right_row_finder.row_start <= 1 && right_row_finder.row_end >= 2 && passed_hole == passed_row )
+				{
+				passed_row++;
 				}
 			}
 			break;
