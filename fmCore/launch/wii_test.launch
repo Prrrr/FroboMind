@@ -1,0 +1,13 @@
+<launch>
+	<node respawn="true" pkg="wiimote"  type="wiimote_node.py" name="wiimote" output="screen"/>
+	
+	<group ns="fmHMI">
+		<node pkg="fmHMI" name="wii_state" type="wii_state" output="screen">
+			<param name="wiimote_sub_topic" value="/wiimote/state"/>
+ 			<param name="led_pub_topic" value="/wiimote/leds" />
+  			<param name="rumble_pub_topic" value="/wiimote/rumble" />
+  			<param name="state_pub_topic" value="/state" />		
+		</node>
+	</group>
+	
+</launch>

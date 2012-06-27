@@ -25,6 +25,10 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 rosbuild_add_executable(kbhit_move src/kbhit_move/manual_move.cpp)
 rosbuild_add_executable(kbhit_move src/kbhit_move/kbhit.c)
 
+rosbuild_add_executable(wii_state src/wii_state/wii_state_node.cpp)
+rosbuild_add_executable(wii_state src/wii_state/wii_state.cpp)
+
+
 #common commands for building c++ executables and libraries
 #rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
 #target_link_libraries(${PROJECT_NAME} another_library)
