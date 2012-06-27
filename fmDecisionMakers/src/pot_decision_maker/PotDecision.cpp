@@ -60,7 +60,10 @@ PotDecision::PotDecision() {
 	row_state = RST_NO_ROW;
 	
 	// Navigation
-	if (pattern == 0 || rempath[0] == 1) {
+	if (pattern == 0 ) {
+	next_turn_direction = RIGHT;
+	}
+	else if (rempath[0] == 1) {
 	next_turn_direction = RIGHT;
 	}
 	else if (rempath[0] == 2) {
@@ -122,8 +125,14 @@ void PotDecision::run_state_machine() {
 			}
 			if(rempath.size() == 0)
 			{
-			pattern = 0;
 			}
+			else if (rempath[0] == 1) {
+			next_turn_direction = RIGHT;
+			}
+			else if (rempath[0] == 2) {
+			next_turn_direction = LEFT;
+			}
+
 			// Increment counters
 			if(row_state == RST_BETWEEN_ROWS) {
 				between_row_counter++;
@@ -150,11 +159,8 @@ void PotDecision::run_state_machine() {
 			if(right_row_counter > left_row_counter && right_row_counter > between_row_counter) {
 				twist_msg.twist.angular.z += 0.2;
 				if(object_row_end_position_right <= 0) {
-					if (pattern == 0 || rempath[0] == 1) {
+					if (pattern == 0){
 					next_turn_direction = RIGHT;
-					}
-					else if (rempath[0] == 2) {
-					next_turn_direction = LEFT;
 					}
 					ROS_INFO("Going right");
 					//state = STM_TURNING;
@@ -166,11 +172,8 @@ void PotDecision::run_state_machine() {
 			} else if (left_row_counter > right_row_counter && left_row_counter > between_row_counter) {
 				twist_msg.twist.angular.z -= 0.2;
 				if(object_row_end_position_left <= 0) {
-					if (pattern == 0 || rempath[0] == 2) {
+					if (pattern == 0) {
 					next_turn_direction = LEFT;
-					}
-					else if (rempath[0] == 1) {
-					next_turn_direction = RIGHT;
 					}
 					ROS_INFO("Going left");
 					//state = STM_TURNING;
@@ -358,7 +361,11 @@ void PotDecision::run_state_machine() {
 			gyro = gyro_z - gyro_offset;
 			state_space.calc_odom(wheel_speed_left, wheel_speed_right, 0.02, gyro);
 			
-			if (rempath[1] == rowcount && pattern == 1) {
+			if (pattern == 0)
+			{
+			odom_min = 0.1;
+			}
+			else if (rempath[1] == rowcount) {
 			odom_min = 0.1;			
 			}		
 			else {
@@ -402,7 +409,11 @@ void PotDecision::run_state_machine() {
 			//ROS_WARN("State: TURNING");
 			//state = STM_TURNING;
 			//}
-			if (holecount == rempath[1] && rowcount == rempath[1]) {
+			if (pattern == 0){
+				ROS_WARN("State: TURNING");
+				state = STM_TURNING;
+			}
+			else if(holecount == rempath[1] && rowcount == rempath[1]) {
 			ROS_WARN("State: TURNING");
 			state = STM_TURNING;
 			prevpath.push_back(rempath[0]);
@@ -452,7 +463,8 @@ void PotDecision::run_state_machine() {
 			
 			if(row_state != RST_NO_ROW)
 			{
-				if (pattern == 0) {
+				if (rempath.size() == 0) {
+				pattern = 0;
 				// Turn the other way next time
 				next_turn_direction = (next_turn_direction == RIGHT) ? LEFT : RIGHT;
 				}
