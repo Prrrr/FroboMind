@@ -49,8 +49,14 @@ void serialInterface::readHandler(const boost::system::error_code& error,
 	if (bytes_transferred) {
 
 		std::istream is(&readbuffer);
-		std::string line;
-		std::getline(is, line);
+		char line[128];
+
+		// only read until bytes_transferred to avoid reading after \n
+		// if the streambuffer contains a second line boost should call us again
+		is.getline(line,bytes_transferred,term_char);
+		// Old code
+		//std::string line;
+		//std::getline(is, line);
 
 		/* publish data ro ros */
 		++serial_rx_msg.header.seq;
@@ -102,7 +108,7 @@ void serialInterface::readSome() {
     if (ros::ok()) {
         //serial_.async_read_some(boost::asio::buffer(&rx_buffer_, 1), boost::bind(&serialInterface::readHandler, this, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
         boost::asio::async_read_until(serial_, readbuffer,
-                boost::regex("\n"), boost::bind(
+                term_char, boost::bind(
                         &serialInterface::readHandler, this,
                         boost::asio::placeholders::error,
                         boost::asio::placeholders::bytes_transferred));

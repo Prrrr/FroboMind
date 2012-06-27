@@ -26,13 +26,15 @@ rosbuild_add_boost_directories()
 
 rosbuild_add_executable(serial_node src/serial/serial_node.cpp)
 rosbuild_add_executable(serial_node src/serial/serialInterface.cpp)
+rosbuild_link_boost(serial_node system)
 
-rosbuild_add_executable(serial_binary_node src/serial_binary/serial_node.cpp)
-rosbuild_add_executable(serial_binary_node src/serial_binary/serialInterface.cpp)
+#rosbuild_add_executable(serial_binary_node src/serial_binary/serial_node.cpp)
+#rosbuild_add_executable(serial_binary_node src/serial_binary/serialInterface.cpp)
 
 rosbuild_add_executable(slip_node src/SLIP/SlipProtocol.cpp)
 
 rosbuild_add_executable(serial_bytes_node src/serial_bytes/SerialBytes.cpp)
+rosbuild_link_boost(serial_bytes_node system)
 
 IF(EXISTS /usr/include/can4linux.h)
 rosbuild_add_executable(can_node src/can/can_node.cpp)

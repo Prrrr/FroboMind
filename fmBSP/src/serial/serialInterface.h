@@ -68,6 +68,7 @@ public:
   bool openDevice(std::string device, int baudrate);
   void writeHandler(const fmMsgs::serial::ConstPtr& msg);
   virtual ~serialInterface();
+  char term_char;
 };
 
 #endif /* SERIALINTERFACE_H_ */
