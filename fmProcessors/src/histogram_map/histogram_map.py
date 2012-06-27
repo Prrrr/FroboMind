@@ -9,12 +9,15 @@ from sensor_msgs.msg import *
 import math
 import tf
 import random
+from time import *
 
 from histogram_map import *
 from sensor_msgs.msg._PointCloud import PointCloud
 
 DEF_VISUALIZE = 1
-dt = 0.1
+LRS_SKIP = 5
+N_PARTICLES = 50
+dt = 0.2
 class Map:
     def __init__(self, x_meter, y_meter, res = 10):
         rospy.loginfo("Map started")
@@ -138,7 +141,7 @@ class HistogramLoc:
         self.wheel_speed_left = 0
         self.wheel_speed_right = 0
         self.robot = Robot()
-        self.pf = ParticleFilter(100)
+        self.pf = ParticleFilter()
           
         rospy.init_node('histogram_localization')
         self.odomPub = rospy.Publisher("/base_odom", Odometry)
@@ -151,6 +154,7 @@ class HistogramLoc:
         if DEF_VISUALIZE == 1:  # This is onlu for visualization
             self.markerArrayPub = rospy.Publisher("/marker_array", MarkerArray) 
             self.pointCloudPub = rospy.Publisher("/point_cloud", PointCloud)
+            self.create_map()
             self.publish_map()
         # ROS
         rospy.spin()
@@ -162,8 +166,9 @@ class HistogramLoc:
         start_angle = scan.angle_min
         stop_angle = scan.angle_max
         delta_angle = scan.angle_increment
-        for i in range(len(scan.ranges)):
-            angle = start_angle +i*delta_angle
+        N_ranges = len(scan.ranges)
+        for i in range(0, N_ranges, LRS_SKIP):
+            angle = start_angle + i*delta_angle
             # inverted ?
             #angle = stop_angle - i*delta_angle
             point = Point32()
@@ -180,9 +185,10 @@ class HistogramLoc:
             self.pointCloudPub.publish(point_cloud)
     def wheel_speed_callback(self, speeds):
         self.wheel_speed_right = speeds.data[0]
-        self.wheel_speed_left = speeds.data[1]
+        self.wheel_speed_left = speeds.data[1] 
 
     def timer_callback(self, event):
+        now = time()
         #rospy.loginfo("Timer callback left: %f" %self.wheel_speed_left)
         #self.robot.move(0.05, 0.05, self.dt)
         self.pf.left_wheel = self.wheel_speed_left
@@ -193,7 +199,7 @@ class HistogramLoc:
             self.markerArrayPub.publish(markerArray)
             self.publish_map()
         #print "pos: ", pos
-            
+        print "Timer: ", time() - now, " seconds"
     def publish_odom(self, robot):
         # Transform etc
         x = robot.x
@@ -231,22 +237,25 @@ class HistogramLoc:
         # print
         #rospy.loginfo("Odom: %f %f" %(x,y))
         
+    def create_map(self):
+        if DEF_VISUALIZE == 1:
+            self.grid = OccupancyGrid()
+            self.grid.header.stamp = rospy.Time.now()
+            self.grid.info.height = self.pf.mymap.y_cells
+            self.grid.info.width = self.pf.mymap.x_cells
+            self.grid.header.frame_id = "/map"
+            self.grid.info.resolution = self.pf.mymap.resolution
+            self.grid.info.map_load_time = rospy.Time.now()
+            for y in range(self.grid.info.height):
+                for x in range(self.grid.info.width):
+                    self.grid.data.append(self.pf.mymap.map[y][x])
+    
     def publish_map(self):
         if DEF_VISUALIZE == 1:
-            grid = OccupancyGrid()
-            grid.header.stamp = rospy.Time.now()
-            grid.info.height = self.pf.mymap.y_cells
-            grid.info.width = self.pf.mymap.x_cells
-            grid.header.frame_id = "/map"
-            grid.info.resolution = self.pf.mymap.resolution
-            grid.info.map_load_time = rospy.Time.now()
-            for y in range(grid.info.height):
-                for x in range(grid.info.width):
-                    grid.data.append(self.pf.mymap.map[y][x])
-            self.mapPub.publish(grid)
+            self.mapPub.publish(self.grid)
 
 class ParticleFilter:
-    def __init__(self, N = 100):
+    def __init__(self):
         # Create a map
         self.mymap = Map(10, 7, 0.01)
         for i in range(5):
@@ -259,7 +268,7 @@ class ParticleFilter:
 
         # make particles
         self.p = []
-        for i in range(N):
+        for i in range(N_PARTICLES):
             r = Robot()
             self.p.append(r)
             #print r
@@ -286,11 +295,11 @@ class ParticleFilter:
         return robot
     
     def run_filter(self):
-        N = len(self.p)
         p = self.p
         # move
         p2 = []
-        for i in range(N):
+        #rospy.logwarn("WHEEL: %f %f" %(self.right_wheel, self.right_wheel))
+        for i in range(N_PARTICLES):
             p2.append(p[i].move(self.left_wheel, self.right_wheel,dt))
         p = p2
         # measurement update
@@ -298,18 +307,18 @@ class ParticleFilter:
         self.update()
         for i in range(len(self.p)):
             w.append(self.p[i].w)
-            print "#:", i, " : ", self.p[i].w
+            #print "#:", i, " : ", self.p[i].w
         
         # resampling
         p3 = []
-        index = int(random.random() * N)
+        index = int(random.random() * N_PARTICLES)
         beta = 0.0
         mw = max(w)
-        for i in range(N):
+        for i in range(N_PARTICLES):
             beta += random.random() * 2.0 * mw
             while beta > w[index]:
                 beta -= w[index]
-                index = (index + 1) % N
+                index = (index + 1) % N_PARTICLES 
             p3.append(p[index])
             
 #        for i in range(len(p)):
@@ -322,7 +331,7 @@ class ParticleFilter:
         # publish marker arrays
         if DEF_VISUALIZE == 1:
             markerArray.markers = []
-            for i in range(N):
+            for i in range(N_PARTICLES):
                 quat = tf.transformations.quaternion_from_euler(0,0,p[i].th)
                 marker = Marker()
                 marker.header.stamp = rospy.Time.now()
@@ -349,11 +358,19 @@ class ParticleFilter:
         return self.get_position(p)
     
     def update(self):
-        #print "1: " , len(self.p)
-        #print "1: " , len(point_cloud)
-        for i in range(len(self.p)):
+        map = self.mymap.map
+        lenx = self.mymap.x_cells
+        leny = self.mymap.y_cells
+#        N_particles = 50
+#        N_points = 100
+        N_points = len(point_cloud.points)
+        res = self.mymap.resolution
+        
+        now = time()
+        #print "Particles: ", len(self.p), " points: ", len(point_cloud.points)
+        for i in range(N_PARTICLES):
             self.p[i].w = 0
-            for j in range(len(point_cloud.points)):
+            for j in range(N_points):
                 # transpose laser scan into particle's view
                 px = point_cloud.points[j].x * math.cos(self.p[i].th) - point_cloud.points[j].y * math.sin(self.p[i].th)
                 py = point_cloud.points[j].x * math.sin(self.p[i].th) + point_cloud.points[j].y * math.cos(self.p[i].th)
@@ -362,17 +379,15 @@ class ParticleFilter:
                 py += self.p[i].y
                 #print "px: " , px
                 
-                res = self.mymap.resolution
                 x = int(px/res)
                 y = int(py/res)
-                map = self.mymap.map
                 #print "x: ", x, " y:", y, " lenx: ", len(map), "leny: ", len(map[0])
                 # calc distance to point
-                dx = self.p[i].x - px
-                dy = self.p[i].y - py
-                dist = math.sqrt(dx**2 + dy**2)
+                #dx = self.p[i].x - px
+                #dy = self.p[i].y - py
+                #dist = math.sqrt(dx**2 + dy**2)
                 #print "distance: ", dist
-                if x < len(map[0]) and x > 0 and y < len(map) and y > 0:
+                if x < lenx and x > 0 and y < leny and y > 0:
                     # check for hit
                     if not map[y][x] == 0:
                         #print "hit: ", self.p[i]
@@ -383,7 +398,7 @@ class ParticleFilter:
                 y = int(self.p[i].y/res)
                 if not map[y][x] == 0:
                     self.p[i].w = 0
-                    
+        print "Update: ", time() - now, " seconds"
 
 
 # Main loop

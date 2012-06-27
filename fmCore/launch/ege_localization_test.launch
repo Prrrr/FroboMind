@@ -44,6 +44,7 @@
 <!--	<node pkg="rosbag" type="play" name="playback_data" args="/home/ege/ros_work/bags/run4.bag --><!--clock"/>-->
 
 	<node pkg="fmProcessors" type="histogram_map.py" name="particle" output="screen"/>
+<!-- /home/ege/ros_work/bags/26Juni/formap.bag-->
 	<node pkg="rosbag" type="play" name="playback_data" args="/home/ege/ros_work/bags/26Juni/formap.bag --clock"/>
 
 </launch>
