@@ -21,7 +21,8 @@ using namespace std;
 		STM_EXIT_ROW,
 		STM_HEADLAND,
 		STM_HEADLAND_ROW,
-		STM_HEADLAND_HOLE
+		STM_HEADLAND_HOLE 
+,
 	};
  
  	enum { 
@@ -355,8 +356,16 @@ void PotDecision::run_state_machine() {
 			gyro = gyro_z - gyro_offset;
 			state_space.calc_odom(wheel_speed_left, wheel_speed_right, 0.02, gyro);
 			
+			//set odom min.
+			double odom_min = 0;
+			if (rempath[1] == rowcount && pattern == 1) {
+			odom_min = 0.1;			
+			}		
+			else {
+			odom_min = 0.3;			
+			}
 			if (next_turn_direction == LEFT){
-				if(!left_row_finder.list[1] && state_space.x > 0.3 )	{
+				if(!left_row_finder.list[1] && state_space.x > odom_min )	{
 				state = STM_HEADLAND_HOLE;
 				holecount++;
 				state_space.set_zero();
@@ -364,7 +373,7 @@ void PotDecision::run_state_machine() {
 				}
 			}
 			else if (next_turn_direction == RIGHT){
-				if(!right_row_finder.list[1] && state_space.x > 0.3 )	{
+				if(!right_row_finder.list[1] && state_space.x > odom_min )	{
 				state = STM_HEADLAND_HOLE;
 				holecount++;
 				state_space.set_zero();
