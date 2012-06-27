@@ -41,13 +41,13 @@
 	
 
 	<group ns="lrs">
-		 <node pkg="fmExtractors" name="pot_detector_node" type="pot_detector">
+		 <!-- <node pkg="fmExtractors" name="pot_detector_node" type="pot_detector">
 			<param name="laser_scan_topic" value="laser_msgs_1"/>
 			<param name="row_topic" value="row_topic"/>
 			<param name="max_dist_to_rows" value="0.6"/>
 			<param name="show_image" value="0"/>
 			<param name="avg_time_buffer_size" value="10"/>
-		</node>
+		</node> -->
 		<node pkg="fmExtractors" type="object_avoidance" name="object_avoidance_node" output="screen"> 
 			<param name="laser_scan_topic" value="laser_msgs_1" />
 			<param name="object_topic" value="object_topic" />

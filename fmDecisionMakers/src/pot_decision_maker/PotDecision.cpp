@@ -49,6 +49,7 @@ PotDecision::PotDecision() {
 	new_r_row = 0;
 	new_object_row = 0;
 	new_object_message_received = 0;
+	saved_wii_state = 0;
 	
 	// Object row data initialization
 	object_row_resolution = 0;
@@ -495,7 +496,7 @@ void PotDecision::run_state_machine() {
 	{
 		twist_msg.twist.angular.z = cte_pid.run(twist_msg.twist.angular.z, 0.02);
 		
-		if (saved_wii_state = 0) {
+		if (saved_wii_state == 0) {
 			twist_msg.twist.linear.x = 0;
 			twist_msg.twist.angular.z = 0;
 		}
@@ -644,7 +645,7 @@ void PotDecision::gyroCallback(const fmMsgs::gyroscope::ConstPtr& gyro) {
 }
 
 void PotDecision::wiiCallback(const fmMsgs::wii_state::ConstPtr& wii_state) {
-	ROS_INFO("Wii state: %f", wii_state->mode);
+	//ROS_INFO("Wii state: %f", wii_state->mode);
 	saved_wii_state = wii_state->mode;
 }
 
