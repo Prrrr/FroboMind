@@ -36,6 +36,8 @@ int main(int argc, char **argv)
 	ws.wiimote_rumble = n.advertise<wiimote::RumbleControl>(rumble_pub_topic.c_str(), 1);
 	ws.state_pub = n.advertise<fmMsgs::wii_state>(state_pub_topic.c_str(),1);
 
+	ros::Timer timer = n.createTimer(ros::Duration(0.25), &WiiState::timerCallback, &ws);
+
 	ws.stateLoop();
 
 	return 0;

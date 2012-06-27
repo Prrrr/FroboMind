@@ -1,7 +1,7 @@
 #include "geometry_msgs/TwistStamped.h"
 //#include "fmMsgs/motor_power.h"
 //#include "fmMsgs/odometry.h"
-#include "fmMsgs/warhorse_state.h"
+#include "fmMsgs/wii_state.h"
 #include "ros/ros.h"
 #include "wiimote/LEDControl.h"
 #include "wiimote/RumbleControl.h"
@@ -22,11 +22,12 @@ private:
 	void checkButtons();
 	void rumble(double duration = 0.1);
 	void led(int l0, int l1, int l2, int l3);
+	void led_single(int nr, int status);
 
 	int state;
 	int mode;
 
-	fmMsgs::warhorse_state warhorse_state;
+	fmMsgs::wii_state wii_state_msg;
 
 public:
 
@@ -40,6 +41,7 @@ public:
 
   void stateLoop();
   void wiimoteHandler(const wiimote::StateConstPtr& state);
+  void timerCallback(const ros::TimerEvent& event);
 
 };
 

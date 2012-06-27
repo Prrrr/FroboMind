@@ -41,11 +41,8 @@ WiiState::WiiState()
 	buttons_old.resize(11,false);
 	buttons_pushed.resize(11,false);
 
-	mode = menu;
+	mode = stop;
 	state = manual_drive;
-
-	warhorse_state.drive_state = warhorse_state.STOP;
-	warhorse_state.task_state = warhorse_state.MANUAL_DRIVE;
 }
 
 void WiiState::wiimoteHandler(const wiimote::StateConstPtr& state)
@@ -80,6 +77,12 @@ void WiiState::checkButtons()
 
 }
 
+void WiiState::led_single(int nr, int status) {
+	static int leds[4] = { 0, 0, 0, 0 };
+	leds[nr] = status;
+	led(leds[0], leds[1], leds[2], leds[3]);
+}
+
 void WiiState::led(int l0, int l1, int l2, int l3)
 {
 	int leds[4] = { l0, l1, l2, l3 };
@@ -98,6 +101,19 @@ void WiiState::led(int l0, int l1, int l2, int l3)
 	wiimote_led.publish(led);
 }
 
+void WiiState::timerCallback(const ros::TimerEvent& event) {
+	static int status = 0;
+	if(status)
+	{
+		status = 0;
+		led_single(3, OFF);
+	} else {
+		status = 1;
+		led_single(3, ON);
+	}
+	
+}
+
 void WiiState::stateLoop()
 {
 	ros::Rate loop_rate(10); //Encoder loop frequency
@@ -106,106 +122,33 @@ void WiiState::stateLoop()
 	{
 		ros::spinOnce();
 		checkButtons();
-
+		
 		switch (mode) {
-			case menu:
-				switch (state) {
-					case manual_drive:
-						led(OFF,ON,ON,ON);
-						warhorse_state.task_state = warhorse_state.MANUAL_DRIVE;
-						if (buttons_pushed[wiiPlus])
-							state = task1left;
-						if (buttons_pushed[wiiMinus])
-							state = task3;
-						if (buttons_pushed[wiiHome])
-						{
-							mode = drive;
-							led(ON,OFF,OFF,OFF);
-						}
-						break;
-					case task1left:
-						led(ON,OFF,ON,ON);
-						warhorse_state.task_state = warhorse_state.TASK1LEFT;
-						if (buttons_pushed[wiiPlus])
-							state = task1right;
-						if (buttons_pushed[wiiMinus])
-							state = manual_drive;
-						if (buttons_pushed[wiiHome])
-						{
-							mode = drive;
-							led(OFF,ON,OFF,OFF);
-						}
-						break;
-					case task1right:
-						led(ON,ON,OFF,ON);
-						warhorse_state.task_state = warhorse_state.TASK1RIGHT;
-						if (buttons_pushed[wiiPlus])
-							state = task2;
-						if (buttons_pushed[wiiMinus])
-							state = task1left;
-						if (buttons_pushed[wiiHome])
-						{
-							mode = drive;
-							led(OFF,OFF,ON,OFF);
-						}
-						break;
-					case task2:
-						led(ON,ON,ON,OFF);
-						warhorse_state.task_state = warhorse_state.TASK2;
-						if (buttons_pushed[wiiPlus])
-							state = task3;
-						if (buttons_pushed[wiiMinus])
-							state = task1right;
-						if (buttons_pushed[wiiHome])
-						{
-							mode = drive;
-							led(OFF,OFF,OFF,ON);
-						}
-						break;
-					case task3:
-						led(OFF,OFF,ON,ON);
-						warhorse_state.task_state = warhorse_state.TASK3;
-						if (buttons_pushed[wiiPlus])
-							state = manual_drive;
-						if (buttons_pushed[wiiMinus])
-							state = task2;
-						if (buttons_pushed[wiiHome])
-						{
-							mode = drive;
-							led(ON,ON,OFF,OFF);
-						}
-						break;
-					default:
-						break;
-				}
-				break;
-			case drive:
-				warhorse_state.drive_state = warhorse_state.DRIVE;
-				if (buttons_pushed[wiiHome])
-				{
-					mode = menu;
-					warhorse_state.drive_state = warhorse_state.STOP;
-				}
-				if (buttons_pushed[wiiOne])
-				{
-					mode = paused;
-				}
-				break;
 			case stop:
-
-				break;
-			case paused:
-				warhorse_state.drive_state = warhorse_state.PAUSED;
-				if (buttons_pushed[wiiOne])
-				{
-					mode = drive;
-				}
-				break;
+				wii_state_msg.mode = wii_state_msg.STOP;
+				if (buttons_pushed[wiiA])
+					{
+						ROS_INFO("Changing to drive");
+						mode = drive;
+						led_single(0, ON);
+					}
+			break;
+			
+			case drive:
+				wii_state_msg.mode = wii_state_msg.DRIVE;;
+				if (buttons_pushed[wiiA])
+					{
+						ROS_INFO("Changing to pause");
+						mode = stop;
+						led_single(0, OFF);
+					}
+			break;
+			
 			default:
-				break;
+			break;
 		}
 
-		state_pub.publish(warhorse_state);
+		state_pub.publish(wii_state_msg);
 
 		loop_rate.sleep();
 	}
