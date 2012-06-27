@@ -35,7 +35,7 @@ using namespace std;
 		 RIGHT,
 		 LEFT
 	 };
-	int test [12] = {1,1,1,1,1,2,1,1,2,1,2,2};
+	int test [4] = {2,2,2,2};
 	vector<int> prevpath;
 	vector<int> rempath(test,test + sizeof(test) / sizeof(int));
 	int pattern = 1;

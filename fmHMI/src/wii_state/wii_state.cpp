@@ -29,8 +29,8 @@ enum states {
 };
 
 enum modes {
-	drive = 10,
-	stop = 11,
+	stop = 0,
+	drive = 1,
 	menu = 12,
 	paused = 13
 };
@@ -41,7 +41,7 @@ WiiState::WiiState()
 	buttons_old.resize(11,false);
 	buttons_pushed.resize(11,false);
 
-	mode = start_mode;
+	mode = 0;
 	state = manual_drive;
 }
 

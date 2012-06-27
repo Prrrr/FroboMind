@@ -30,8 +30,9 @@ int main(int argc, char **argv)
 	n.param<std::string> ("state_pub_topic", state_pub_topic, "/state");
 
 	WiiState ws = WiiState();
-
-	n.param<int> ("start_mode", ws.start_mode, 0);
+	
+	n.param<int> ("start_mode", ws.mode, 0);
+	
 	
 	ws.wiimote_state = n.subscribe(wiimote_sub_topic.c_str(),1,&WiiState::wiimoteHandler,&ws);
 	ws.wiimote_led = n.advertise<wiimote::LEDControl>(led_pub_topic.c_str(), 1);

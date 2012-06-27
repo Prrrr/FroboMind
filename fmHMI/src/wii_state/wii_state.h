@@ -25,19 +25,17 @@ private:
 	void led_single(int nr, int status);
 
 	int state;
-	int mode;
 
 	fmMsgs::wii_state wii_state_msg;
 
 public:
-
-  int start_mode;
   ros::Subscriber wiimote_state;
 
   ros::Publisher wiimote_led;
   ros::Publisher wiimote_rumble;
   ros::Publisher state_pub;
 
+	int mode;
   WiiState();
 
   void stateLoop();
