@@ -9,7 +9,8 @@
 			<param name="wiimote_sub_topic" value="/wiimote/state"/>
  			<param name="led_pub_topic" value="/wiimote/leds" />
   			<param name="rumble_pub_topic" value="/wiimote/rumble" />
-  			<param name="state_pub_topic" value="/wii_state_topic" />		
+  			<param name="state_pub_topic" value="/wii_state_topic" />	
+  			<param name="start_mode" value="1" />	
 		</node>
 	</group>
 	

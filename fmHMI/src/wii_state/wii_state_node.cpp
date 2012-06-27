@@ -31,6 +31,8 @@ int main(int argc, char **argv)
 
 	WiiState ws = WiiState();
 
+	n.param<int> ("start_mode", ws.start_mode, 0);
+	
 	ws.wiimote_state = n.subscribe(wiimote_sub_topic.c_str(),1,&WiiState::wiimoteHandler,&ws);
 	ws.wiimote_led = n.advertise<wiimote::LEDControl>(led_pub_topic.c_str(), 1);
 	ws.wiimote_rumble = n.advertise<wiimote::RumbleControl>(rumble_pub_topic.c_str(), 1);

@@ -41,7 +41,7 @@ WiiState::WiiState()
 	buttons_old.resize(11,false);
 	buttons_pushed.resize(11,false);
 
-	mode = stop;
+	mode = start_mode;
 	state = manual_drive;
 }
 

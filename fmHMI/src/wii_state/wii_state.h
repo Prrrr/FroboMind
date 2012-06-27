@@ -31,6 +31,7 @@ private:
 
 public:
 
+  int start_mode;
   ros::Subscriber wiimote_state;
 
   ros::Publisher wiimote_led;
