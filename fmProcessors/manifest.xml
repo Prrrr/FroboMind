@@ -8,6 +8,7 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/fmProcessing</url>
+  <depend package="rospy"/>
   <depend package="fmMsgs"/>
   <depend package="fmBSP"/>
   <depend package="sensor_msgs"/>
