@@ -17,6 +17,7 @@
 #include "math.h"
 #include "pid.h"
 #include "fmMsgs/object_row.h"
+#include "fmMsgs/wii_state.h"
 #include "vector"
 	
 	 
@@ -125,6 +126,9 @@ private:
 	int row_state;
 	row_hole_finder left_row_finder, right_row_finder;
 	
+	// Wii state
+	int saved_wii_state;
+	
 public:
 	PotDecision();
 	virtual ~PotDecision();
@@ -141,6 +145,7 @@ public:
 
 	// Functions
 	void rowCallback(const fmMsgs::row::ConstPtr& row);
+	void wiiCallback(const fmMsgs::wii_state::ConstPtr& wii_state);
 	void objectRowCallback(const fmMsgs::object_row::ConstPtr& row);
 	void wheelCallback(const fmMsgs::float_data::ConstPtr& speeds);
 	void gyroCallback(const fmMsgs::gyroscope::ConstPtr& gyro);

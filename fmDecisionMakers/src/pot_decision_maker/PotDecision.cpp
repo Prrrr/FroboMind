@@ -22,7 +22,6 @@ using namespace std;
 		STM_HEADLAND,
 		STM_HEADLAND_ROW,
 		STM_HEADLAND_HOLE 
-,
 	};
  
  	enum { 
@@ -95,6 +94,8 @@ void PotDecision::run_state_machine() {
 	twist_msg.twist.linear.x = 0;
 	twist_msg.twist.angular.z = 0;
 	
+	//set odom min.
+	double odom_min = 0;
 	
 	switch (state) {
 		case STM_START:
@@ -356,8 +357,6 @@ void PotDecision::run_state_machine() {
 			gyro = gyro_z - gyro_offset;
 			state_space.calc_odom(wheel_speed_left, wheel_speed_right, 0.02, gyro);
 			
-			//set odom min.
-			double odom_min = 0;
 			if (rempath[1] == rowcount && pattern == 1) {
 			odom_min = 0.1;			
 			}		
@@ -495,6 +494,12 @@ void PotDecision::run_state_machine() {
 	if(publish_twist)
 	{
 		twist_msg.twist.angular.z = cte_pid.run(twist_msg.twist.angular.z, 0.02);
+		
+		if (saved_wii_state = 0) {
+			twist_msg.twist.linear.x = 0;
+			twist_msg.twist.angular.z = 0;
+		}
+		
 		twist_pub.publish(twist_msg);
 		publish_twist = 0;
 	}
@@ -637,6 +642,12 @@ void PotDecision::gyroCallback(const fmMsgs::gyroscope::ConstPtr& gyro) {
 	new_gyro = 1;
 	gyro_z = gyro->z;
 }
+
+void PotDecision::wiiCallback(const fmMsgs::wii_state::ConstPtr& wii_state) {
+	ROS_INFO("Wii state: %f", wii_state->mode);
+	saved_wii_state = wii_state->mode;
+}
+
 
 void PotDecision::timerCallback(const ros::TimerEvent& event) {
 	//ROS_INFO("Timerz!");
@@ -838,7 +849,7 @@ int main(int argc, char** argv){
 	PotDecision pd;
 	
 	// Ros params
-	string wheel_topic, row_topic, gyro_topic, twist_topic, object_topic, object_row_topic, row_state_topic;
+	string wheel_topic, row_topic, gyro_topic, twist_topic, object_topic, object_row_topic, row_state_topic, wii_state_topic;
 	
 	//nh.param<string>("laser_scan_topic", laser_scan_topic, "laser_scan_topic");
 	nh.param<string>("row_topic", row_topic, "row_topic");
@@ -848,6 +859,7 @@ int main(int argc, char** argv){
 	nh.param<string>("object_topic", object_topic, "object_topic");
 	nh.param<string>("object_row_topic", object_row_topic, "object_row_topic");
 	nh.param<string>("row_state_topic", row_state_topic, "row_state_topic");
+	nh.param<string>("wii_state_topic", wii_state_topic, "/wii_state_topic");
 	nh.param<double>("time_s", pd.time_s, 0.1);
 	nh.param<double>("linear_mean_velocity", pd.linear_mean_velocity, 0.5);
 	nh.param<double>("mean_driving_distance_from_rows", pd.mean_driving_distance_from_rows, 0.35);
@@ -867,6 +879,7 @@ int main(int argc, char** argv){
 	// Subscribes and publishers
 	//ros::Subscriber laser_subscriber = n.subscribe<sensor_msgs::LaserScan>(laser_scan_topic.c_str(), 10, &PotDetector::laserScanCallback, &pd);
 	ros::Subscriber row_subscriber = n.subscribe<fmMsgs::row>(row_topic.c_str(), 1, &PotDecision::rowCallback, &pd);
+	ros::Subscriber wii_subscriber = n.subscribe<fmMsgs::wii_state>(wii_state_topic.c_str(), 1, &PotDecision::wiiCallback, &pd);
 	ros::Subscriber wheel_subscriber = n.subscribe<fmMsgs::float_data>(wheel_topic.c_str(), 10, &PotDecision::wheelCallback, &pd);
 	ros::Subscriber gyro_subscriber = n.subscribe<fmMsgs::gyroscope>(gyro_topic.c_str(), 10, &PotDecision::gyroCallback, &pd);
 	ros::Subscriber object_subscriber = n.subscribe<fmMsgs::detected_objects>(object_topic.c_str(), 10, &PotDecision::objectCallback, &pd);

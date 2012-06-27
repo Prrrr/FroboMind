@@ -6,7 +6,7 @@
 			<param name="wiimote_sub_topic" value="/wiimote/state"/>
  			<param name="led_pub_topic" value="/wiimote/leds" />
   			<param name="rumble_pub_topic" value="/wiimote/rumble" />
-  			<param name="state_pub_topic" value="/state" />		
+  			<param name="state_pub_topic" value="/wii_state" />		
 		</node>
 	</group>
 	
