@@ -21,7 +21,8 @@ using namespace std;
 		STM_EXIT_ROW,
 		STM_HEADLAND,
 		STM_HEADLAND_ROW,
-		STM_HEADLAND_HOLE 
+		STM_HEADLAND_HOLE,
+		STM_MARKER
 	};
  
  	enum { 
@@ -490,6 +491,11 @@ void PotDecision::run_state_machine() {
 		
 		case STM_STOP:
 			break;
+		case STM_MARKER:
+			ROS_ERROR("Mark Found");
+			state = STM_DRIVE;
+			ROS_WARN("State: Drive");
+			break;
 			
 		default:
 			ROS_WARN("State: Default");
@@ -517,6 +523,11 @@ void PotDecision::run_state_machine() {
 		publish_twist = 0;
 	}
 	
+	if (marker_found == 1){
+		//marker_found = 0; / Only find marker ONCE
+		state = STM_MARKER;
+	}
+
 	// Publish state
 	++row_state_msg.header.seq;
 	row_state_msg.header.stamp = ros::Time::now();
@@ -842,7 +853,9 @@ void PotDecision::calculate_odometry() {
 	// 	new_left_object = 0;
 	// 	new_right_object = 0;
 }
-
+void PotDecision::markerCallback(const std_msgs::Int8::ConstPtr& marker){
+	marker_found = 1;
+}
 
 /*
  * Main loop
@@ -897,6 +910,7 @@ int main(int argc, char** argv){
 	ros::Subscriber gyro_subscriber = n.subscribe<fmMsgs::gyroscope>(gyro_topic.c_str(), 10, &PotDecision::gyroCallback, &pd);
 	ros::Subscriber object_subscriber = n.subscribe<fmMsgs::detected_objects>(object_topic.c_str(), 10, &PotDecision::objectCallback, &pd);
 	ros::Subscriber object_row_subscriber = n.subscribe<fmMsgs::object_row>(object_row_topic.c_str(), 10, &PotDecision::objectRowCallback, &pd);
+	ros::Subscriber marker_sub = n.subscribe<std_msgs::Int8>("/marker_pub", 1, &PotDecision::markerCallback, &pd);
 
 	pd.twist_pub = n.advertise<geometry_msgs::TwistStamped>(twist_topic.c_str(), 1);
 	pd.row_state_pub = n.advertise<fmMsgs::hilde_states>(row_state_topic.c_str(), 1);

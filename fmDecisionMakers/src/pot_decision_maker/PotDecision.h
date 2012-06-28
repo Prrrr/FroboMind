@@ -19,6 +19,7 @@
 #include "fmMsgs/object_row.h"
 #include "fmMsgs/wii_state.h"
 #include "vector"
+#include "std_msgs/Int8.h"
 	
 	 
 using namespace std;
@@ -128,6 +129,8 @@ private:
 	
 	// Wii state
 	int saved_wii_state;
+	// marker state
+	int marker_found;
 	
 public:
 	PotDecision();
@@ -150,6 +153,7 @@ public:
 	void wheelCallback(const fmMsgs::float_data::ConstPtr& speeds);
 	void gyroCallback(const fmMsgs::gyroscope::ConstPtr& gyro);
 	void objectCallback(const fmMsgs::detected_objects::ConstPtr& objects);
+	void markerCallback(const std_msgs::Int8::ConstPtr& marker);
 	void timerCallback(const ros::TimerEvent& event);
 	void calculate_odometry();
 	void calculate_twist_from_object_boxes();

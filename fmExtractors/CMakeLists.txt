@@ -21,6 +21,9 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #uncomment if you have defined services
 #rosbuild_gensrv()
 
+# camera detect blue and yellow node
+rosbuild_add_executable(tutorialROSOpenCV src/tutorialROSOpenCV/main.cpp)
+
 # Pot detector node
 rosbuild_add_executable(pot_detector src/lidar_feature_extractors/pot_detector_opencv/PotDetector.cpp)
 
