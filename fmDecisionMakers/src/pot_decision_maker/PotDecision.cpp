@@ -88,7 +88,8 @@ void PotDecision::run_state_machine() {
 //	static int passed_row = 0;
 //	static int passed_hole = 0;
 	static int rowcount = 0;
-	static int holecount = 0;	
+	static int holecount = 0;
+	static int count_time = 0;
 	double speed_factor = 0;
 	double gyro_offset = 0;
 	double gyro = 0;
@@ -99,7 +100,7 @@ void PotDecision::run_state_machine() {
 	twist_msg.twist.linear.x = 0;
 	twist_msg.twist.angular.z = 0;
 	
-	//set odom min.
+	//Initialize the minimum value of odometry before turn.
 	double odom_min = 0;
 	
 	switch (state) {
@@ -491,10 +492,15 @@ void PotDecision::run_state_machine() {
 		
 		case STM_STOP:
 			break;
+
 		case STM_MARKER:
-			ROS_ERROR("Mark Found");
+			if(count_time == 0) {
+			ROS_ERROR("Mark Found, waiting for 3 seconds"); }
+			count_time++;
+			if(count_time > 150) {
 			state = STM_DRIVE;
 			ROS_WARN("State: Drive");
+			}
 			break;
 			
 		default:
@@ -523,7 +529,7 @@ void PotDecision::run_state_machine() {
 		publish_twist = 0;
 	}
 	
-	if (marker_found == 1){
+	if (marker_found == 1 && count_time == 0){
 		//marker_found = 0; / Only find marker ONCE
 		state = STM_MARKER;
 	}

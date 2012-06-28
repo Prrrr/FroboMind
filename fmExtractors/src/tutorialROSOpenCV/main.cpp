@@ -26,6 +26,7 @@ ros::Publisher position_pub;
 ros::Publisher marker_pub;
 int count1 = 0;
 int count2 = 0;
+int show_image = 0;
 
 IplImage* HSVToTerraCotta( IplImage* imgSrc, IplImage* imgDst)
 {
@@ -242,10 +243,10 @@ void imageCallback(const sensor_msgs::ImageConstPtr& original_image)
 			1 );
 	}*/
 //	ROS_INFO("Number of contours: %d", n);
-//	cvShowImage("Image", cv_image_filtered);
-
-//	cvShowImage("Image window", cv_image);
-	
+if (show_image == 1) {
+	cvShowImage("Image", cv_image_filtered);
+	cvShowImage("Image window", cv_image);
+}
 
 	
 cvWaitKey(33);
@@ -270,14 +271,13 @@ int main(int argc, char **argv)
 
        
         ros::NodeHandle nh;
-
+        ros::NodeHandle nh2;
 	
         image_transport::ImageTransport it(nh);
-	
-//    cv::namedWindow("Image", CV_WINDOW_AUTOSIZE);
- 
-//	cv::namedWindow("Image window", CV_WINDOW_AUTOSIZE);
-
+    if (show_image == 1) {
+    cv::namedWindow("Image", CV_WINDOW_AUTOSIZE);
+	cv::namedWindow("Image window", CV_WINDOW_AUTOSIZE);
+    }
 
 
 //	  position_pub=nh.advertise<geometry_msgs::TwistStamped>("TwistStamped",1);
@@ -287,11 +287,10 @@ int main(int argc, char **argv)
 
       pub = it.advertise("camera/image_processed", 1);
       marker_pub = nh.advertise<std_msgs::Int8>("/marker_pub", 1);
-	
-//	 cv::destroyWindow("Image");
-//         cv::destroyWindow("Image window");
-         ros::spin();
-
- 
-
+      nh2.param<int>("show_image", show_image,1);
+      if (show_image == 1) {
+      cv::destroyWindow("Image");
+      cv::destroyWindow("Image window");
+      }
+      ros::spin();
 }
