@@ -242,9 +242,9 @@ void imageCallback(const sensor_msgs::ImageConstPtr& original_image)
 			1 );
 	}*/
 //	ROS_INFO("Number of contours: %d", n);
-	cvShowImage("Image", cv_image_filtered);
+//	cvShowImage("Image", cv_image_filtered);
 
-	cvShowImage("Image window", cv_image);
+//	cvShowImage("Image window", cv_image);
 	
 
 	
@@ -274,9 +274,9 @@ int main(int argc, char **argv)
 	
         image_transport::ImageTransport it(nh);
 	
-    cv::namedWindow("Image", CV_WINDOW_AUTOSIZE);
+//    cv::namedWindow("Image", CV_WINDOW_AUTOSIZE);
  
-	cv::namedWindow("Image window", CV_WINDOW_AUTOSIZE);
+//	cv::namedWindow("Image window", CV_WINDOW_AUTOSIZE);
 
 
 
@@ -288,8 +288,8 @@ int main(int argc, char **argv)
       pub = it.advertise("camera/image_processed", 1);
       marker_pub = nh.advertise<std_msgs::Int8>("/marker_pub", 1);
 	
-	 cv::destroyWindow("Image");
-         cv::destroyWindow("Image window");
+//	 cv::destroyWindow("Image");
+//         cv::destroyWindow("Image window");
          ros::spin();
 
  
